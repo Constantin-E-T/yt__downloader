@@ -75,8 +75,9 @@ Agent creates: `.agents/{agent}/reports/TASK_{id}_report.md`
 1. ✅ Exact file paths created/modified
 2. ✅ Test results (copy/paste output)
 3. ✅ Build/compile proof
-4. ✅ Documentation updates
-5. ✅ Learning log (if mistakes made)
+4. ✅ Documentation updates (godoc comments)
+5. ✅ API endpoint documentation (if applicable)
+6. ✅ Learning log (if mistakes made)
 
 ## Error Handling
 
@@ -124,16 +125,75 @@ Agent: [NAME]
 Date: [YYYY-MM-DD]
 ```
 
+## Git Commit Strategy
+
+### When to Create Commits
+**MASTER coordinates commits via DEVOPS agent:**
+
+**After Phase Completion:**
+- ✅ After Phase 0 (Setup) - Initial structure
+- ✅ After Phase 1 (Database) - Schema and container
+- ✅ After Phase 2 (Backend Core) - API foundation
+- ✅ After Phase 3 (YouTube Service) - Core feature
+- ✅ After Phase 4 (Frontend) - UI foundation
+- ✅ After Phase 5 (Integration) - Full stack working
+- ✅ After Phase 6 (AI) - AI features
+- ✅ After Phase 7 (Polish) - Production ready
+
+**Commit Message Format:**
+```
+Phase X Complete: [Description]
+
+- Task X.1: [Description]
+- Task X.2: [Description]
+...
+
+✅ Tests: [X/X passing]
+✅ Coverage: [X%]
+✅ Build: Successful
+```
+
+**Never Commit:**
+- ❌ After individual tasks (wait for phase completion)
+- ❌ Broken builds
+- ❌ Failing tests
+- ❌ .env files (only .env.example)
+
+## API Documentation Strategy
+
+### When to Add API Documentation
+**For Backend APIs with Chi router:**
+
+**After Each API Endpoint Task:**
+- Add godoc comments to all exported functions
+- Add example requests/responses in comments
+- Document error codes and responses
+
+**After Phase 2 Complete (Backend Core):**
+- Assign BACKEND agent to add Swagger/OpenAPI
+- Use swaggo/swag for Go: github.com/swaggo/swag
+- Generate swagger.json and swagger.yaml
+- Add /swagger endpoint for API docs UI
+- Document all existing endpoints
+
+**Swagger Requirements:**
+- All endpoints documented with @Summary, @Description
+- Request/Response schemas with examples
+- Error responses documented
+- Authentication requirements noted
+- Hosted at /swagger/index.html
+
 ## Quality Gates
 
 ### Before Approval Checklist
 - [ ] Agent followed exact scope
 - [ ] Tests prove functionality
 - [ ] Code compiles/builds
-- [ ] Documentation updated
+- [ ] Documentation updated (godoc + inline)
 - [ ] No TODO comments left
 - [ ] Modular, not monolithic
 - [ ] Follows best practices from TECH_STACK.md
+- [ ] API endpoints have godoc comments (if applicable)
 
 ## Master Agent's Mindset
 - **Strict** - No compromises on quality

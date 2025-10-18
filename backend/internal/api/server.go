@@ -1,0 +1,132 @@
+// Package api provides HTTP server implementation and API handlers
+package api
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+
+	"github.com/yourusername/yt-transcript-downloader/internal/config"
+	"github.com/yourusername/yt-transcript-downloader/internal/db"
+)
+
+// Server represents the HTTP API server
+type Server struct {
+	db     db.DB
+	router chi.Router
+	srv    *http.Server
+	config *config.Config
+}
+
+// NewServer creates a new API server with the given configuration and database connection
+func NewServer(cfg *config.Config, database db.DB) (*Server, error) {
+	if cfg == nil {
+		return nil, errors.New("config cannot be nil")
+	}
+	if database == nil {
+		return nil, errors.New("database cannot be nil")
+	}
+
+	s := &Server{
+		db:     database,
+		config: cfg,
+		router: chi.NewRouter(),
+	}
+
+	// Setup routes and middleware
+	s.setupRoutes()
+
+	// Create HTTP server
+	s.srv = &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.APIPort),
+		Handler:      s.router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	return s, nil
+}
+
+// setupRoutes configures all middleware and routes for the server
+func (s *Server) setupRoutes() {
+	// Core middleware stack
+	s.router.Use(middleware.RequestID)
+	s.router.Use(middleware.RealIP)
+	s.router.Use(middleware.Logger)
+	s.router.Use(middleware.Recoverer)
+
+	// CORS configuration
+	s.router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
+	// API routes
+	s.router.Route("/api/v1", func(r chi.Router) {
+		r.Get("/health", s.handleHealth)
+	})
+}
+
+// Start starts the HTTP server
+// It blocks until the server is shut down or an error occurs
+func (s *Server) Start(ctx context.Context) error {
+	if s.srv == nil {
+		return errors.New("server not initialized")
+	}
+
+	// Channel to capture server errors
+	errChan := make(chan error, 1)
+
+	// Start server in goroutine
+	go func() {
+		fmt.Printf("🚀 Server starting on http://localhost:%d\n", s.config.APIPort)
+		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errChan <- err
+		}
+	}()
+
+	// Wait for context cancellation or server error
+	select {
+	case <-ctx.Done():
+		fmt.Println("\n🛑 Shutting down server...")
+		// Create shutdown context with timeout
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		// Attempt graceful shutdown
+		if err := s.srv.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("server shutdown failed: %w", err)
+		}
+		fmt.Println("✅ Server shutdown complete")
+		return nil
+
+	case err := <-errChan:
+		return fmt.Errorf("server error: %w", err)
+	}
+}
+
+// Shutdown gracefully shuts down the server
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.srv == nil {
+		return errors.New("server not initialized")
+	}
+
+	fmt.Println("🛑 Initiating server shutdown...")
+	if err := s.srv.Shutdown(ctx); err != nil {
+		return fmt.Errorf("server shutdown failed: %w", err)
+	}
+
+	fmt.Println("✅ Server shutdown complete")
+	return nil
+}
