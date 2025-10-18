@@ -1,0 +1,2 @@
+TODO 
+can we create a youtube downloader to take transcripts only from the video. so after i can run the trascripts and take the content and use it for ideaas and so on. example i look for a money advice video , i want to extract the trascripts from there and create what i need a app, or integrate and so on
