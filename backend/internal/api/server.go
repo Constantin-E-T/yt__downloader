@@ -14,29 +14,58 @@ import (
 
 	"github.com/yourusername/yt-transcript-downloader/internal/config"
 	"github.com/yourusername/yt-transcript-downloader/internal/db"
+	"github.com/yourusername/yt-transcript-downloader/internal/services"
 )
+
+type youtubeService interface {
+	GetVideoMetadata(videoID string) (*services.VideoMetadata, error)
+	GetTranscript(videoID, language string) ([]services.TranscriptLine, error)
+}
+
+type videoRepository interface {
+	SaveVideo(ctx context.Context, video *db.Video) error
+}
+
+type transcriptRepository interface {
+	SaveTranscript(ctx context.Context, transcript *db.Transcript) error
+}
 
 // Server represents the HTTP API server
 type Server struct {
-	db     db.DB
-	router chi.Router
-	srv    *http.Server
-	config *config.Config
+	db              db.DB
+	router          chi.Router
+	srv             *http.Server
+	config          *config.Config
+	youtube         youtubeService
+	videoRepository videoRepository
+	transcriptRepo  transcriptRepository
 }
 
 // NewServer creates a new API server with the given configuration and database connection
-func NewServer(cfg *config.Config, database db.DB) (*Server, error) {
+func NewServer(cfg *config.Config, database db.DB, ytSvc youtubeService, videoRepo videoRepository, transcriptRepo transcriptRepository) (*Server, error) {
 	if cfg == nil {
 		return nil, errors.New("config cannot be nil")
 	}
 	if database == nil {
 		return nil, errors.New("database cannot be nil")
 	}
+	if ytSvc == nil {
+		return nil, errors.New("youtube service cannot be nil")
+	}
+	if videoRepo == nil {
+		return nil, errors.New("video repository cannot be nil")
+	}
+	if transcriptRepo == nil {
+		return nil, errors.New("transcript repository cannot be nil")
+	}
 
 	s := &Server{
-		db:     database,
-		config: cfg,
-		router: chi.NewRouter(),
+		db:              database,
+		config:          cfg,
+		router:          chi.NewRouter(),
+		youtube:         ytSvc,
+		videoRepository: videoRepo,
+		transcriptRepo:  transcriptRepo,
 	}
 
 	// Setup routes and middleware
@@ -75,6 +104,7 @@ func (s *Server) setupRoutes() {
 	// API routes
 	s.router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", s.handleHealth)
+		r.Post("/transcripts/fetch", s.handleFetchTranscript)
 	})
 }
 

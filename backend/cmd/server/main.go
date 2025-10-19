@@ -10,6 +10,7 @@ import (
 	"github.com/yourusername/yt-transcript-downloader/internal/api"
 	"github.com/yourusername/yt-transcript-downloader/internal/config"
 	"github.com/yourusername/yt-transcript-downloader/internal/db"
+	"github.com/yourusername/yt-transcript-downloader/internal/services"
 )
 
 func main() {
@@ -36,9 +37,14 @@ func main() {
 	defer database.Close()
 	fmt.Println("✅ Database connected successfully")
 
+	// Initialize dependencies
+	youtubeService := services.NewYouTubeService()
+	videoRepo := db.NewVideoRepository(database)
+	transcriptRepo := db.NewTranscriptRepository(database)
+
 	// Create API server
 	fmt.Println("🏗️  Creating API server...")
-	server, err := api.NewServer(cfg, database)
+	server, err := api.NewServer(cfg, database, youtubeService, videoRepo, transcriptRepo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create API server: %v\n", err)
 		os.Exit(1)

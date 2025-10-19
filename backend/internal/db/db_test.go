@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -134,6 +135,24 @@ func TestNewPostgresDB(t *testing.T) {
 	err = tx.Rollback(ctx)
 	assert.NoError(t, err)
 
+	txWithOptions, err := db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	assert.NoError(t, err)
+	assert.NotNil(t, txWithOptions)
+	err = txWithOptions.Rollback(ctx)
+	assert.NoError(t, err)
+
+	batch := &pgx.Batch{}
+	batch.Queue("SELECT 1")
+	batch.Queue("SELECT 2")
+	results := db.SendBatch(ctx, batch)
+	for i := 0; i < 2; i++ {
+		var v int
+		err = results.QueryRow().Scan(&v)
+		assert.NoError(t, err)
+		assert.NotZero(t, v)
+	}
+	assert.NoError(t, results.Close())
+
 	// Test connection acquisition
 	conn, err := db.Acquire(ctx)
 	assert.NoError(t, err)
@@ -160,6 +179,23 @@ func TestNewPostgresDB(t *testing.T) {
 	err = connTx.Rollback(ctx)
 	assert.NoError(t, err)
 
+	connTxWithOptions, err := conn.BeginTx(ctx, pgx.TxOptions{})
+	assert.NoError(t, err)
+	err = connTxWithOptions.Rollback(ctx)
+	assert.NoError(t, err)
+
+	connBatch := &pgx.Batch{}
+	connBatch.Queue("SELECT 3")
+	connBatch.Queue("SELECT 4")
+	connResults := conn.SendBatch(ctx, connBatch)
+	for i := 0; i < 2; i++ {
+		var v int
+		err = connResults.QueryRow().Scan(&v)
+		assert.NoError(t, err)
+		assert.NotZero(t, v)
+	}
+	assert.NoError(t, connResults.Close())
+
 	conn.Release()
 }
 
@@ -184,12 +220,21 @@ func TestPostgresDB_TransactionMethods(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test BeginTx with options
-	// Note: pgx.TxOptions would need to be imported for full testing
-	// For now, we'll just test the basic functionality
-	tx2, err := db.Begin(ctx)
+	tx2, err := db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	assert.NoError(t, err)
 	assert.NotNil(t, tx2)
 
 	err = tx2.Rollback(ctx)
 	assert.NoError(t, err)
+
+	batch := &pgx.Batch{}
+	batch.Queue("SELECT 5")
+	batch.Queue("SELECT 6")
+	results := db.SendBatch(ctx, batch)
+	for i := 0; i < 2; i++ {
+		var v int
+		err = results.QueryRow().Scan(&v)
+		assert.NoError(t, err)
+	}
+	assert.NoError(t, results.Close())
 }

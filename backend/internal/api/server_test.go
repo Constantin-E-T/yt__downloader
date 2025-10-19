@@ -17,6 +17,7 @@ import (
 
 	"github.com/yourusername/yt-transcript-downloader/internal/config"
 	"github.com/yourusername/yt-transcript-downloader/internal/db"
+	"github.com/yourusername/yt-transcript-downloader/internal/services"
 )
 
 // mockDB is a mock implementation of db.DB for testing
@@ -62,6 +63,28 @@ func (m *mockDB) Stat() *pgxpool.Stat {
 	return nil
 }
 
+type noopYouTubeService struct{}
+
+func (noopYouTubeService) GetVideoMetadata(string) (*services.VideoMetadata, error) {
+	return &services.VideoMetadata{}, nil
+}
+
+func (noopYouTubeService) GetTranscript(string, string) ([]services.TranscriptLine, error) {
+	return nil, errors.New("not implemented")
+}
+
+type noopVideoRepo struct{}
+
+func (noopVideoRepo) SaveVideo(context.Context, *db.Video) error {
+	return nil
+}
+
+type noopTranscriptRepo struct{}
+
+func (noopTranscriptRepo) SaveTranscript(context.Context, *db.Transcript) error {
+	return nil
+}
+
 // mockConfig creates a test configuration
 func mockConfig() *config.Config {
 	return &config.Config{
@@ -74,7 +97,7 @@ func TestNewServer(t *testing.T) {
 		cfg := mockConfig()
 		database := &mockDB{}
 
-		server, err := NewServer(cfg, database)
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 
 		require.NoError(t, err)
 		assert.NotNil(t, server)
@@ -87,7 +110,7 @@ func TestNewServer(t *testing.T) {
 	t.Run("returns error when config is nil", func(t *testing.T) {
 		database := &mockDB{}
 
-		server, err := NewServer(nil, database)
+		server, err := NewServer(nil, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 
 		assert.Error(t, err)
 		assert.Nil(t, server)
@@ -97,11 +120,21 @@ func TestNewServer(t *testing.T) {
 	t.Run("returns error when database is nil", func(t *testing.T) {
 		cfg := mockConfig()
 
-		server, err := NewServer(cfg, nil)
-
+		server, err := NewServer(cfg, nil, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 		assert.Error(t, err)
 		assert.Nil(t, server)
 		assert.Contains(t, err.Error(), "database cannot be nil")
+	})
+
+	t.Run("returns error when youtube service is nil", func(t *testing.T) {
+		cfg := mockConfig()
+		database := &mockDB{}
+
+		server, err := NewServer(cfg, database, nil, noopVideoRepo{}, noopTranscriptRepo{})
+
+		assert.Error(t, err)
+		assert.Nil(t, server)
+		assert.Contains(t, err.Error(), "youtube service cannot be nil")
 	})
 }
 
@@ -110,7 +143,7 @@ func TestHealthEndpoint(t *testing.T) {
 		// Setup
 		cfg := mockConfig()
 		database := &mockDB{pingError: nil}
-		server, err := NewServer(cfg, database)
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 		require.NoError(t, err)
 
 		// Create test request
@@ -136,7 +169,7 @@ func TestHealthEndpoint(t *testing.T) {
 		// Setup
 		cfg := mockConfig()
 		database := &mockDB{pingError: errors.New("connection failed")}
-		server, err := NewServer(cfg, database)
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 		require.NoError(t, err)
 
 		// Create test request
@@ -164,7 +197,7 @@ func TestCORSHeaders(t *testing.T) {
 		// Setup
 		cfg := mockConfig()
 		database := &mockDB{}
-		server, err := NewServer(cfg, database)
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 		require.NoError(t, err)
 
 		// Create test request with Origin header
@@ -196,7 +229,7 @@ func TestShutdown(t *testing.T) {
 		// Setup
 		cfg := mockConfig()
 		database := &mockDB{}
-		server, err := NewServer(cfg, database)
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 		require.NoError(t, err)
 
 		// Start server in background
@@ -236,7 +269,7 @@ func TestStartWithContext(t *testing.T) {
 		// Setup
 		cfg := mockConfig()
 		database := &mockDB{}
-		server, err := NewServer(cfg, database)
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
 		require.NoError(t, err)
 
 		// Create context with cancel
