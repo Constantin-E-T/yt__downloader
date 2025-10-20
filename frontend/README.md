@@ -1,36 +1,76 @@
-## Usage
+## Frontend — YouTube Transcript Downloader
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+Modern Solid.js application built with pnpm, Vite, Tailwind CSS, and TanStack Query. This project powers the Phase 4 frontend foundation with responsive, accessible, and SEO-friendly defaults for 2025.
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+### Prerequisites
+
+- Node.js ≥ 20
+- pnpm ≥ 9
+
+### Getting Started
 
 ```bash
-$ npm install # or pnpm install or yarn install
+pnpm install
+pnpm dev
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+The development server runs on [http://localhost:3000](http://localhost:3000) with the backend proxied through `/api`.
 
-## Available Scripts
+### Core Scripts
 
-In the project directory, you can run:
+- `pnpm dev` – Start the Vite development server
+- `pnpm build` – Produce an optimized production bundle
+- `pnpm preview` – Preview the production build locally
+- `pnpm typecheck` – Run TypeScript in `--noEmit` mode
+- `pnpm lint` – Execute ESLint with Solid + TypeScript rules
+- `pnpm format` – Format source files using Prettier
 
-### `npm run dev` or `npm start`
+### Project Structure
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
+src/
+  components/    # Reusable UI + feature components
+  pages/         # Route-level components
+  services/      # API integrations and data helpers
+  types/         # Shared TypeScript contracts
+  utils/         # Utility helpers (e.g., class merging)
+  styles/        # Global Tailwind entrypoint
+  data/          # Static data (languages, etc.)
+  hooks/         # Shared Solid hooks
+```
 
-The page will reload if you make edits.<br>
+### Theme & Dark Mode
 
-### `npm run build`
+- The theme helper in `src/utils/theme.ts` manages a persisted `light | dark | system` preference (stored in `localStorage`).
+- The header exposes a theme dropdown that cycles between Light, Dark, and System modes.
+- All primitives (`Button`, `Card`, `Modal`, etc.) include matching `dark:` Tailwind variants, so the experience remains consistent across themes.
 
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
+### Environment Variables
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+Copy `.env.example` to `.env.local` and adjust as needed:
 
-## Deployment
+```
+VITE_API_URL=http://localhost:8080/api
+```
 
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+### Quality Targets
 
-## This project was created with the [Solid CLI](https://github.com/solidjs-community/solid-cli)
+- Lighthouse scores ≥ 90 across Performance, Accessibility, SEO
+- TypeScript strict mode with zero errors
+- ESLint + Prettier clean
+- Responsive layout verified at 375px, 768px, 1440px
+- Keyboard-only navigation verified (Tab, Shift+Tab, Arrow keys)
+- Lighthouse Accessibility score ≥ 95 (Chrome DevTools > Lighthouse)
+
+### Deployment
+
+1. `pnpm build`
+2. Serve the `dist/` directory via your hosting provider (Netlify, Vercel, Cloudflare Pages, etc.)
+3. Ensure environment variables are set (e.g., `VITE_API_URL`)
+
+### Additional Resources
+
+- [Solid.js Documentation](https://docs.solidjs.com/)
+- [TanStack Query for Solid](https://tanstack.com/query/v5/docs/solid/overview)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Component Reference](./src/components/README.md)

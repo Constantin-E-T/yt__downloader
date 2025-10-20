@@ -1,0 +1,16 @@
+{
+  "name": "YouTube Transcript Downloader",
+  "short_name": "YT Transcripts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#0ea5e9",
+  "description": "Download YouTube transcripts instantly with a modern Solid.js frontend.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

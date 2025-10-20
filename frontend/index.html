@@ -1,15 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <title>Solid App</title>
+    <meta name="theme-color" content="#0ea5e9" />
+    <meta
+      name="description"
+      content="Download YouTube transcripts instantly with a fast, accessible Solid.js experience."
+    />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>YouTube Transcript Downloader</title>
   </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+  <body class="bg-slate-950 text-slate-50 antialiased">
+    <noscript>
+      You need to enable JavaScript to run this application. It is built with Solid.js and requires
+      JavaScript for interactivity.
+    </noscript>
     <div id="root"></div>
-
-    <script src="/src/index.tsx" type="module"></script>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>
