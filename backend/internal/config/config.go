@@ -73,6 +73,19 @@ func (c *Config) Validate() error {
 		errors = append(errors, "DB_PASSWORD is required")
 	}
 
+	// Production-specific validation
+	if os.Getenv("GO_ENV") == "production" {
+		// Enforce strong password requirements in production
+		if c.DBPassword == "postgres" || c.DBPassword == "password" || len(c.DBPassword) < 12 {
+			errors = append(errors, "production requires a strong DB password (min 12 characters, not default)")
+		}
+
+		// Warn about localhost in production
+		if c.DBHost == "localhost" || c.DBHost == "127.0.0.1" {
+			errors = append(errors, "production should use a remote database host, not localhost")
+		}
+	}
+
 	// Validate port ranges
 	if c.DBPort <= 0 || c.DBPort > 65535 {
 		errors = append(errors, "DB_PORT must be between 1 and 65535")

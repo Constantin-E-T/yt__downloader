@@ -49,15 +49,25 @@ func (r *TranscriptRepository) SaveTranscript(ctx context.Context, transcript *T
 		return errors.New("language is required")
 	}
 
+	queryCtx, cancel := withQueryTimeout(ctx)
+	defer cancel()
+
 	var row pgx.Row
 	if transcript.ID == "" {
-		row = r.db.QueryRow(ctx, insertTranscriptSQL, transcript.VideoID, transcript.Language, transcript.Content)
+		row = r.db.QueryRow(queryCtx, insertTranscriptSQL, transcript.VideoID, transcript.Language, transcript.Content)
 	} else {
-		row = r.db.QueryRow(ctx, upsertTranscriptSQL, transcript.ID, transcript.VideoID, transcript.Language, transcript.Content)
+		row = r.db.QueryRow(queryCtx, upsertTranscriptSQL, transcript.ID, transcript.VideoID, transcript.Language, transcript.Content)
 	}
 
 	if err := row.Scan(&transcript.ID, &transcript.VideoID, &transcript.Language, &transcript.Content, &transcript.CreatedAt); err != nil {
-		return fmt.Errorf("save transcript: %w", err)
+		switch {
+		case isDuplicateKeyError(err):
+			return fmt.Errorf("transcript already exists for video %s (%s): %w", transcript.VideoID, transcript.Language, err)
+		case isConnectionError(err):
+			return fmt.Errorf("database connection failed: %w", err)
+		default:
+			return fmt.Errorf("save transcript: %w", err)
+		}
 	}
 
 	return nil
@@ -79,8 +89,14 @@ func (r *TranscriptRepository) GetTranscriptsByVideoID(ctx context.Context, vide
 		return nil, errors.New("video id is required")
 	}
 
-	rows, err := r.db.Query(ctx, selectTranscriptsByVideoIDSQL, videoID)
+	queryCtx, cancel := withQueryTimeout(ctx)
+	defer cancel()
+
+	rows, err := r.db.Query(queryCtx, selectTranscriptsByVideoIDSQL, videoID)
 	if err != nil {
+		if isConnectionError(err) {
+			return nil, fmt.Errorf("database connection failed: %w", err)
+		}
 		return nil, fmt.Errorf("get transcripts by video id: %w", err)
 	}
 	defer rows.Close()
@@ -95,6 +111,9 @@ func (r *TranscriptRepository) GetTranscriptsByVideoID(ctx context.Context, vide
 	}
 
 	if err := rows.Err(); err != nil {
+		if isConnectionError(err) {
+			return nil, fmt.Errorf("database connection failed: %w", err)
+		}
 		return nil, fmt.Errorf("iterate transcripts: %w", err)
 	}
 
@@ -118,11 +137,17 @@ func (r *TranscriptRepository) GetTranscriptByID(ctx context.Context, id string)
 	}
 
 	var transcript Transcript
-	err := r.db.QueryRow(ctx, selectTranscriptByIDSQL, id).
+	queryCtx, cancel := withQueryTimeout(ctx)
+	defer cancel()
+
+	err := r.db.QueryRow(queryCtx, selectTranscriptByIDSQL, id).
 		Scan(&transcript.ID, &transcript.VideoID, &transcript.Language, &transcript.Content, &transcript.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
+		}
+		if isConnectionError(err) {
+			return nil, fmt.Errorf("database connection failed: %w", err)
 		}
 		return nil, fmt.Errorf("get transcript by id: %w", err)
 	}

@@ -9,13 +9,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func applyMigrations(t *testing.T, database DB) {
-	t.Helper()
+func applyMigrations(tb testing.TB, database DB) {
+	tb.Helper()
 
-	path := filepath.Join("..", "..", "..", "database", "migrations", "001_initial_schema_up.sql")
-	sqlBytes, err := os.ReadFile(path)
-	require.NoError(t, err, "read migration script")
+	migrations := []string{
+		"001_initial_schema_up.sql",
+		"002_add_indexes_up.sql",
+	}
 
-	_, err = database.Exec(context.Background(), string(sqlBytes))
-	require.NoError(t, err, "apply migration script")
+	for _, name := range migrations {
+		path := filepath.Join("..", "..", "..", "database", "migrations", name)
+		sqlBytes, err := os.ReadFile(path)
+		require.NoError(tb, err, "read migration script %s", name)
+
+		_, err = database.Exec(context.Background(), string(sqlBytes))
+		require.NoError(tb, err, "apply migration script %s", name)
+	}
 }

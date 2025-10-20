@@ -185,6 +185,9 @@ func TestYouTubeService_GetTranscript_Missing(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when transcript is missing")
 	}
+	if !errors.Is(err, ErrTranscriptUnavailable) && !errors.Is(err, ErrTranscriptDisabled) {
+		t.Fatalf("expected transcript availability error, got %v", err)
+	}
 }
 
 func TestYouTubeService_GetTranscript_InvalidID(t *testing.T) {

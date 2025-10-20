@@ -47,7 +47,7 @@ func TestConnect_SuccessfulConnection(t *testing.T) {
 	// Test statistics
 	stats := db.Stat()
 	assert.NotNil(t, stats)
-	assert.Equal(t, int32(10), stats.MaxConns())
+	assert.Equal(t, int32(25), stats.MaxConns())
 }
 
 func TestConnectWithConfig_CustomConfiguration(t *testing.T) {

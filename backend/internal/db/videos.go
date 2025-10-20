@@ -40,9 +40,19 @@ func (r *VideoRepository) SaveVideo(ctx context.Context, video *Video) error {
 		return errors.New("youtube id is required")
 	}
 
-	row := r.db.QueryRow(ctx, upsertVideoSQL, video.YouTubeID, video.Title, video.Channel, video.Duration)
+	queryCtx, cancel := withQueryTimeout(ctx)
+	defer cancel()
+
+	row := r.db.QueryRow(queryCtx, upsertVideoSQL, video.YouTubeID, video.Title, video.Channel, video.Duration)
 	if err := row.Scan(&video.ID, &video.YouTubeID, &video.Title, &video.Channel, &video.Duration, &video.CreatedAt); err != nil {
-		return fmt.Errorf("save video: %w", err)
+		switch {
+		case isDuplicateKeyError(err):
+			return fmt.Errorf("video with youtube_id %s already exists: %w", video.YouTubeID, err)
+		case isConnectionError(err):
+			return fmt.Errorf("database connection failed: %w", err)
+		default:
+			return fmt.Errorf("save video: %w", err)
+		}
 	}
 
 	return nil
@@ -65,11 +75,17 @@ func (r *VideoRepository) GetVideoByYouTubeID(ctx context.Context, youtubeID str
 	}
 
 	var video Video
-	err := r.db.QueryRow(ctx, selectVideoByYouTubeIDSQL, youtubeID).
+	queryCtx, cancel := withQueryTimeout(ctx)
+	defer cancel()
+
+	err := r.db.QueryRow(queryCtx, selectVideoByYouTubeIDSQL, youtubeID).
 		Scan(&video.ID, &video.YouTubeID, &video.Title, &video.Channel, &video.Duration, &video.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
+		}
+		if isConnectionError(err) {
+			return nil, fmt.Errorf("database connection failed: %w", err)
 		}
 		return nil, fmt.Errorf("get video by youtube id: %w", err)
 	}
@@ -94,11 +110,17 @@ func (r *VideoRepository) GetVideoByID(ctx context.Context, id string) (*Video, 
 	}
 
 	var video Video
-	err := r.db.QueryRow(ctx, selectVideoByIDSQL, id).
+	queryCtx, cancel := withQueryTimeout(ctx)
+	defer cancel()
+
+	err := r.db.QueryRow(queryCtx, selectVideoByIDSQL, id).
 		Scan(&video.ID, &video.YouTubeID, &video.Title, &video.Channel, &video.Duration, &video.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
+		}
+		if isConnectionError(err) {
+			return nil, fmt.Errorf("database connection failed: %w", err)
 		}
 		return nil, fmt.Errorf("get video by id: %w", err)
 	}

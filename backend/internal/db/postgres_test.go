@@ -19,7 +19,9 @@ type PostgreSQLContainer struct {
 }
 
 // setupPostgresContainer creates a new PostgreSQL test container
-func setupPostgresContainer(t *testing.T) *PostgreSQLContainer {
+func setupPostgresContainer(tb testing.TB) *PostgreSQLContainer {
+	tb.Helper()
+
 	ctx := context.Background()
 
 	req := testcontainers.ContainerRequest{
@@ -40,13 +42,13 @@ func setupPostgresContainer(t *testing.T) *PostgreSQLContainer {
 		ContainerRequest: req,
 		Started:          true,
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	mappedPort, err := container.MappedPort(ctx, "5432")
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	hostIP, err := container.Host(ctx)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	connectionString := fmt.Sprintf("postgres://testuser:testpass@%s:%s/testdb?sslmode=disable",
 		hostIP, mappedPort.Port())
@@ -79,8 +81,8 @@ func TestNewPool_SuccessfulConnection(t *testing.T) {
 
 	// Verify pool configuration
 	config := pool.Config()
-	assert.Equal(t, int32(10), config.MaxConns)
-	assert.Equal(t, int32(2), config.MinConns)
+	assert.Equal(t, int32(25), config.MaxConns)
+	assert.Equal(t, int32(5), config.MinConns)
 	assert.Equal(t, time.Hour, config.MaxConnLifetime)
 	assert.Equal(t, 30*time.Minute, config.MaxConnIdleTime)
 	assert.Equal(t, time.Minute, config.HealthCheckPeriod)
@@ -187,15 +189,15 @@ func TestNewPoolWithConfig_NilConfig(t *testing.T) {
 
 	// Verify default configuration was applied
 	config := pool.Config()
-	assert.Equal(t, int32(10), config.MaxConns)
-	assert.Equal(t, int32(2), config.MinConns)
+	assert.Equal(t, int32(25), config.MaxConns)
+	assert.Equal(t, int32(5), config.MinConns)
 }
 
 func TestDefaultPoolConfig(t *testing.T) {
 	config := DefaultPoolConfig()
 
-	assert.Equal(t, int32(10), config.MaxConns)
-	assert.Equal(t, int32(2), config.MinConns)
+	assert.Equal(t, int32(25), config.MaxConns)
+	assert.Equal(t, int32(5), config.MinConns)
 	assert.Equal(t, time.Hour, config.MaxConnLifetime)
 	assert.Equal(t, 30*time.Minute, config.MaxConnIdleTime)
 	assert.Equal(t, 30*time.Second, config.ConnTimeout)
@@ -290,7 +292,7 @@ func TestPool_ConnectionStatistics(t *testing.T) {
 
 	// Get initial statistics
 	stats := pool.Stat()
-	assert.Equal(t, int32(10), stats.MaxConns())
+	assert.Equal(t, int32(25), stats.MaxConns())
 	assert.GreaterOrEqual(t, stats.TotalConns(), int32(0))
 
 	// Acquire a connection and check stats

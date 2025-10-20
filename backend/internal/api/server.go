@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -90,6 +91,7 @@ func (s *Server) setupRoutes() {
 	s.router.Use(middleware.RealIP)
 	s.router.Use(middleware.Logger)
 	s.router.Use(middleware.Recoverer)
+	s.router.Use(requestTimer)
 
 	// CORS configuration
 	s.router.Use(cors.Handler(cors.Options{
@@ -101,10 +103,19 @@ func (s *Server) setupRoutes() {
 		MaxAge:           300,
 	}))
 
+	// Health and metrics routes
+	s.router.Get("/health", s.handleHealth)
+	s.router.Get("/metrics", s.handleMetrics)
+
 	// API routes
-	s.router.Route("/api/v1", func(r chi.Router) {
+	s.router.Route("/api", func(r chi.Router) {
 		r.Get("/health", s.handleHealth)
-		r.Post("/transcripts/fetch", s.handleFetchTranscript)
+		r.Get("/metrics", s.handleMetrics)
+
+		r.Route("/v1", func(r chi.Router) {
+			r.Get("/health", s.handleHealth)
+			r.Post("/transcripts/fetch", s.handleFetchTranscript)
+		})
 	})
 }
 
@@ -159,4 +170,16 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	fmt.Println("✅ Server shutdown complete")
 	return nil
+}
+
+func requestTimer(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		duration := time.Since(start)
+
+		if duration > time.Second {
+			log.Printf("SLOW REQUEST: %s %s took %v", r.Method, r.URL.Path, duration)
+		}
+	})
 }

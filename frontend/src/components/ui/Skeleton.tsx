@@ -5,7 +5,15 @@ type SkeletonProps = {
 };
 
 export const Skeleton = (props: SkeletonProps) => (
-  <div class={cn('animate-pulse rounded-lg bg-white/5', props.class)} />
+  <div
+    class={cn(
+      'rounded-lg bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200',
+      'dark:from-gray-700 dark:via-gray-600 dark:to-gray-700',
+      'bg-[length:200%_100%]',
+      'animate-shimmer',
+      props.class
+    )}
+  />
 );
 
 export const HistoryCardSkeleton = () => (

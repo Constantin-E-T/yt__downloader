@@ -18,8 +18,8 @@ func NewPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 	}
 
 	// Configure pool settings for optimal performance
-	config.MaxConns = 10 // Maximum 10 connections as specified
-	config.MinConns = 2  // Minimum 2 connections as specified
+	config.MaxConns = 25
+	config.MinConns = 5
 	config.MaxConnLifetime = time.Hour
 	config.MaxConnIdleTime = 30 * time.Minute
 	config.HealthCheckPeriod = time.Minute
@@ -101,8 +101,8 @@ type PoolConfig struct {
 // DefaultPoolConfig returns the default pool configuration
 func DefaultPoolConfig() *PoolConfig {
 	return &PoolConfig{
-		MaxConns:        10,
-		MinConns:        2,
+		MaxConns:        25,
+		MinConns:        5,
 		MaxConnLifetime: time.Hour,
 		MaxConnIdleTime: 30 * time.Minute,
 		ConnTimeout:     30 * time.Second,

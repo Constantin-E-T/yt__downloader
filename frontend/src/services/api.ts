@@ -6,8 +6,6 @@ import type {
   TranscriptRequest,
   TranscriptResponse,
   TranscriptResponseRaw,
-  Video,
-  Transcript,
 } from '@/types/api';
 
 const rawBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';

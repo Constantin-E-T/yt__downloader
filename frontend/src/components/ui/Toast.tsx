@@ -90,6 +90,8 @@ export const ToastProvider: ParentComponent = (props) => {
             <div
               class={cn(
                 'pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl border px-4 py-3 shadow-lg shadow-black/20 backdrop-blur-md dark:shadow-black/40 sm:px-5',
+                'transform transition-all duration-300 ease-out',
+                'animate-slide-in-right',
                 typeStyles[toast.type]
               )}
               role="status"

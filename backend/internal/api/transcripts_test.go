@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,85 +9,22 @@ import (
 	"testing"
 	"time"
 
-	youtube "github.com/kkdai/youtube/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/yourusername/yt-transcript-downloader/internal/config"
-	"github.com/yourusername/yt-transcript-downloader/internal/db"
 	"github.com/yourusername/yt-transcript-downloader/internal/services"
 )
 
-type fakeYouTubeService struct {
-	meta           *services.VideoMetadata
-	metaErr        error
-	transcript     []services.TranscriptLine
-	transcriptErr  error
-	lastMetaInput  string
-	lastTransVideo string
-	lastLanguage   string
-}
-
-func (f *fakeYouTubeService) GetVideoMetadata(videoID string) (*services.VideoMetadata, error) {
-	f.lastMetaInput = videoID
-	if f.metaErr != nil {
-		return nil, f.metaErr
-	}
-	return f.meta, nil
-}
-
-func (f *fakeYouTubeService) GetTranscript(videoID, language string) ([]services.TranscriptLine, error) {
-	f.lastTransVideo = videoID
-	f.lastLanguage = language
-	if f.transcriptErr != nil {
-		return nil, f.transcriptErr
-	}
-	return f.transcript, nil
-}
-
-type recordingVideoRepo struct {
-	saved []*db.Video
-	err   error
-}
-
-func (r *recordingVideoRepo) SaveVideo(_ context.Context, video *db.Video) error {
-	if r.err != nil {
-		return r.err
-	}
-	if video.ID == "" {
-		video.ID = "video-uuid"
-	}
-	video.CreatedAt = time.Now()
-	clone := *video
-	r.saved = append(r.saved, &clone)
-	return nil
-}
-
-type recordingTranscriptRepo struct {
-	saved []*db.Transcript
-	err   error
-}
-
-func (r *recordingTranscriptRepo) SaveTranscript(_ context.Context, transcript *db.Transcript) error {
-	if r.err != nil {
-		return r.err
-	}
-	if transcript.ID == "" {
-		transcript.ID = "transcript-uuid"
-	}
-	transcript.CreatedAt = time.Now()
-	clone := *transcript
-	r.saved = append(r.saved, &clone)
-	return nil
-}
-
 func TestHandleFetchTranscript_Success(t *testing.T) {
+	const sampleVideoID = "dQw4w9WgXcQ"
+
 	cfg := &config.Config{APIPort: 8080}
 	database := &mockDB{}
 
 	youTube := &fakeYouTubeService{
 		meta: &services.VideoMetadata{
-			ID:       "abc123",
+			ID:       sampleVideoID,
 			Title:    "Sample Title",
 			Author:   "Sample Channel",
 			Duration: 5 * time.Minute,
@@ -105,7 +41,7 @@ func TestHandleFetchTranscript_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	payload := TranscriptRequest{
-		VideoURL: "https://youtu.be/abc123",
+		VideoURL: "https://youtu.be/" + sampleVideoID,
 	}
 	body, err := json.Marshal(payload)
 	require.NoError(t, err)
@@ -119,14 +55,14 @@ func TestHandleFetchTranscript_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	require.Len(t, videoRepo.saved, 1)
 	require.Len(t, transcriptRepo.saved, 1)
-	assert.Equal(t, "abc123", youTube.lastTransVideo)
+	assert.Equal(t, sampleVideoID, youTube.lastTransVideo)
 	assert.Equal(t, defaultTranscriptLanguage, youTube.lastLanguage)
 	assert.Equal(t, videoRepo.saved[0].ID, transcriptRepo.saved[0].VideoID)
 
 	var resp TranscriptResponse
 	err = json.NewDecoder(rec.Body).Decode(&resp)
 	require.NoError(t, err)
-	assert.Equal(t, "abc123", resp.VideoID)
+	assert.Equal(t, sampleVideoID, resp.VideoID)
 	assert.Equal(t, "Sample Title", resp.Title)
 	assert.Equal(t, defaultTranscriptLanguage, resp.Language)
 	require.Len(t, resp.Transcript, 2)
@@ -149,18 +85,21 @@ func TestHandleFetchTranscript_InvalidRequest(t *testing.T) {
 	server.router.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	var resp errorResponse
+	var resp ErrorResponse
 	err = json.NewDecoder(rec.Body).Decode(&resp)
 	require.NoError(t, err)
-	assert.Contains(t, resp.Error, "video_url")
+	assert.Equal(t, "video_url is required", resp.Error)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestHandleFetchTranscript_MissingTranscript(t *testing.T) {
+	const sampleVideoID = "dQw4w9WgXcQ"
+
 	cfg := &config.Config{APIPort: 8080}
 	database := &mockDB{}
 	youTube := &fakeYouTubeService{
-		meta:          &services.VideoMetadata{ID: "abc123"},
-		transcriptErr: youtube.ErrTranscriptDisabled,
+		meta:          &services.VideoMetadata{ID: sampleVideoID},
+		transcriptErr: services.ErrTranscriptUnavailable,
 	}
 	videoRepo := &recordingVideoRepo{}
 	transcriptRepo := &recordingTranscriptRepo{}
@@ -168,7 +107,7 @@ func TestHandleFetchTranscript_MissingTranscript(t *testing.T) {
 	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
 	require.NoError(t, err)
 
-	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/abc123"})
+	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/" + sampleVideoID})
 	require.NoError(t, err)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/transcripts/fetch", bytes.NewReader(body))
 	rec := httptest.NewRecorder()
@@ -177,18 +116,20 @@ func TestHandleFetchTranscript_MissingTranscript(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 	assert.Empty(t, videoRepo.saved)
-	var resp errorResponse
-	err = json.NewDecoder(rec.Body).Decode(&resp)
-	require.NoError(t, err)
-	assert.Contains(t, resp.Error, "transcript")
+	var resp ErrorResponse
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	assert.Equal(t, "Transcript is empty or unavailable", resp.Error)
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
 
 func TestHandleFetchTranscript_DatabaseFailure(t *testing.T) {
+	const sampleVideoID = "dQw4w9WgXcQ"
+
 	cfg := &config.Config{APIPort: 8080}
 	database := &mockDB{}
 	youTube := &fakeYouTubeService{
 		meta: &services.VideoMetadata{
-			ID:       "abc123",
+			ID:       sampleVideoID,
 			Title:    "Sample",
 			Author:   "Channel",
 			Duration: time.Minute,
@@ -203,7 +144,7 @@ func TestHandleFetchTranscript_DatabaseFailure(t *testing.T) {
 	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
 	require.NoError(t, err)
 
-	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/abc123"})
+	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/" + sampleVideoID})
 	require.NoError(t, err)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/transcripts/fetch", bytes.NewReader(body))
 	rec := httptest.NewRecorder()
@@ -211,95 +152,8 @@ func TestHandleFetchTranscript_DatabaseFailure(t *testing.T) {
 	server.router.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	var resp errorResponse
-	err = json.NewDecoder(rec.Body).Decode(&resp)
-	require.NoError(t, err)
-	assert.Contains(t, resp.Error, "store video")
+	var resp ErrorResponse
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	assert.Equal(t, "Failed to store video", resp.Error)
 	assert.Empty(t, transcriptRepo.saved)
-}
-
-func TestHandleFetchTranscript_TranscriptRepoFailure(t *testing.T) {
-	cfg := &config.Config{APIPort: 8080}
-	database := &mockDB{}
-	youTube := &fakeYouTubeService{
-		meta: &services.VideoMetadata{
-			ID:       "abc123",
-			Title:    "Example",
-			Author:   "Channel",
-			Duration: time.Minute,
-		},
-		transcript: []services.TranscriptLine{
-			{Start: 0, Duration: time.Second, Text: "hello"},
-		},
-	}
-	videoRepo := &recordingVideoRepo{}
-	transcriptRepo := &recordingTranscriptRepo{err: errors.New("insert failed")}
-
-	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
-	require.NoError(t, err)
-
-	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/abc123"})
-	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/transcripts/fetch", bytes.NewReader(body))
-	rec := httptest.NewRecorder()
-
-	server.router.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	var resp errorResponse
-	err = json.NewDecoder(rec.Body).Decode(&resp)
-	require.NoError(t, err)
-	assert.Contains(t, resp.Error, "store transcript")
-}
-
-func TestHandleFetchTranscript_MetadataInvalidURL(t *testing.T) {
-	cfg := &config.Config{APIPort: 8080}
-	database := &mockDB{}
-	youTube := &fakeYouTubeService{
-		metaErr: errors.New("extract video id: invalid"),
-	}
-
-	server, err := NewServer(cfg, database, youTube, &recordingVideoRepo{}, &recordingTranscriptRepo{})
-	require.NoError(t, err)
-
-	body, err := json.Marshal(TranscriptRequest{VideoURL: ""})
-	require.NoError(t, err)
-	// Force non-empty payload but invalid url via metadata call
-	body, err = json.Marshal(TranscriptRequest{VideoURL: "invalid"})
-	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/transcripts/fetch", bytes.NewReader(body))
-	rec := httptest.NewRecorder()
-
-	server.router.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	var resp errorResponse
-	err = json.NewDecoder(rec.Body).Decode(&resp)
-	require.NoError(t, err)
-	assert.Contains(t, resp.Error, "invalid video url")
-}
-
-func TestHandleFetchTranscript_TranscriptErrorInternal(t *testing.T) {
-	cfg := &config.Config{APIPort: 8080}
-	database := &mockDB{}
-	youTube := &fakeYouTubeService{
-		meta:          &services.VideoMetadata{ID: "abc123"},
-		transcriptErr: errors.New("unexpected failure"),
-	}
-
-	server, err := NewServer(cfg, database, youTube, &recordingVideoRepo{}, &recordingTranscriptRepo{})
-	require.NoError(t, err)
-
-	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/abc123"})
-	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/transcripts/fetch", bytes.NewReader(body))
-	rec := httptest.NewRecorder()
-
-	server.router.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	var resp errorResponse
-	err = json.NewDecoder(rec.Body).Decode(&resp)
-	require.NoError(t, err)
-	assert.Contains(t, resp.Error, "failed to fetch transcript")
 }

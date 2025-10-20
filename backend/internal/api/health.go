@@ -7,52 +7,47 @@ import (
 	"time"
 )
 
-// HealthResponse represents the JSON response for the health endpoint
 type HealthResponse struct {
-	Status   string `json:"status"`
-	Database string `json:"database"`
+	Status    string            `json:"status"`
+	Timestamp string            `json:"timestamp"`
+	Checks    map[string]string `json:"checks"`
 }
 
-// handleHealth handles GET /api/v1/health requests
-// It checks database connectivity and returns the service health status
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	// Set response header
-	w.Header().Set("Content-Type", "application/json")
-
-	// Create context with timeout for database ping
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	// Check database connectivity
-	dbStatus := "connected"
-	statusCode := http.StatusOK
+	checks := make(map[string]string)
+	status := "healthy"
 
+	// Database health
 	if err := s.db.Ping(ctx); err != nil {
-		dbStatus = "disconnected"
+		checks["database"] = "unhealthy: " + err.Error()
+		status = "unhealthy"
+	} else {
+		checks["database"] = "healthy"
+	}
+
+	// YouTube service health
+	if s.youtube == nil {
+		checks["youtube_service"] = "unhealthy: service is nil"
+		status = "unhealthy"
+	} else {
+		checks["youtube_service"] = "healthy"
+	}
+
+	response := HealthResponse{
+		Status:    status,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Checks:    checks,
+	}
+
+	statusCode := http.StatusOK
+	if status == "unhealthy" {
 		statusCode = http.StatusServiceUnavailable
 	}
 
-	// Prepare response
-	response := HealthResponse{
-		Status:   getOverallStatus(dbStatus),
-		Database: dbStatus,
-	}
-
-	// Set status code
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-
-	// Encode and send response
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		// If encoding fails, log it but we've already written the status code
-		http.Error(w, `{"status":"error","database":"unknown"}`, http.StatusInternalServerError)
-		return
-	}
-}
-
-// getOverallStatus determines the overall service status based on component statuses
-func getOverallStatus(dbStatus string) string {
-	if dbStatus == "connected" {
-		return "ok"
-	}
-	return "error"
+	_ = json.NewEncoder(w).Encode(response)
 }

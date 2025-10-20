@@ -1,7 +1,13 @@
-import { Show, splitProps, type ComponentProps, type JSX } from 'solid-js';
+import { Show, splitProps, For, createSignal, type ComponentProps, type JSX } from 'solid-js';
 
 import { Spinner } from '@/components/ui/Spinner';
 import { cn } from '@/utils/cn';
+
+interface Ripple {
+  id: number;
+  x: number;
+  y: number;
+}
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'link';
 type Size = 'sm' | 'md' | 'lg';
@@ -15,7 +21,7 @@ type ButtonProps = {
 } & ComponentProps<'button'>;
 
 const baseClasses =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-400 focus-visible:ring-offset-surface-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900';
+  'relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-400 focus-visible:ring-offset-surface-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900';
 
 const variantClasses: Record<Variant, string> = {
   primary:
@@ -45,12 +51,38 @@ export const Button = (props: ButtonProps): JSX.Element => {
     'disabled',
     'leftIcon',
     'rightIcon',
+    'onClick',
   ]);
 
   const variant = () => local.variant ?? 'primary';
   const size = () => local.size ?? 'md';
   const type = () => local.type ?? 'button';
   const isLink = () => variant() === 'link';
+
+  const [ripples, setRipples] = createSignal<Ripple[]>([]);
+
+  const createRipple = (e: MouseEvent) => {
+    const button = e.currentTarget as HTMLButtonElement;
+    const rect = button.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const newRipple: Ripple = { id: Date.now(), x, y };
+    setRipples([...ripples(), newRipple]);
+
+    setTimeout(() => {
+      setRipples(ripples().filter((r) => r.id !== newRipple.id));
+    }, 600);
+  };
+
+  const handleClick = (e: MouseEvent & { currentTarget: HTMLButtonElement; target: Element }) => {
+    if (!local.disabled && !local.loading) {
+      createRipple(e);
+      if (typeof local.onClick === 'function') {
+        local.onClick(e);
+      }
+    }
+  };
 
   return (
     <button
@@ -62,8 +94,26 @@ export const Button = (props: ButtonProps): JSX.Element => {
         local.class
       )}
       disabled={local.disabled || local.loading}
+      onClick={handleClick}
       {...rest}
     >
+      {/* Ripple effect */}
+      <For each={ripples()}>
+        {(ripple) => (
+          <span
+            class="absolute rounded-full bg-white/30 animate-ping pointer-events-none"
+            style={{
+              left: `${ripple.x}px`,
+              top: `${ripple.y}px`,
+              width: '20px',
+              height: '20px',
+              'margin-left': '-10px',
+              'margin-top': '-10px',
+            }}
+          />
+        )}
+      </For>
+
       <Show when={local.loading}>
         <Spinner size={size() === 'lg' ? 'md' : 'sm'} class="text-current" />
       </Show>

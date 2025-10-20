@@ -14,6 +14,15 @@ import (
 
 var videoIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{6,}$`)
 
+var (
+	ErrVideoNotFound         = errors.New("video not found")
+	ErrVideoPrivate          = errors.New("video is private")
+	ErrVideoAgeRestricted    = errors.New("video is age-restricted")
+	ErrTranscriptDisabled    = errors.New("transcripts are disabled for this video")
+	ErrTranscriptUnavailable = errors.New("transcript not available in requested language")
+	ErrRateLimited           = errors.New("rate limited by YouTube")
+)
+
 // VideoMetadata represents the subset of metadata needed by downstream services.
 type VideoMetadata struct {
 	ID          string
@@ -61,7 +70,7 @@ func (s *YouTubeService) GetVideoMetadata(videoID string) (*VideoMetadata, error
 
 	video, err := s.client.GetVideo(id)
 	if err != nil {
-		return nil, fmt.Errorf("fetch video metadata: %w", err)
+		return nil, classifyVideoError(err)
 	}
 
 	return &VideoMetadata{
@@ -90,33 +99,37 @@ func (s *YouTubeService) GetTranscript(videoID, language string) ([]TranscriptLi
 
 	video, err := s.client.GetVideo(id)
 	if err != nil {
-		return nil, fmt.Errorf("fetch video metadata: %w", err)
+		return nil, classifyVideoError(err)
 	}
 
 	tracks := transcriptCandidates(video.CaptionTracks, language)
 	if len(tracks) == 0 {
-		return nil, errors.New("transcript not available")
+		return nil, ErrTranscriptUnavailable
 	}
 
 	var lastErr error
 	for _, track := range tracks {
 		transcript, err := s.client.GetTranscript(video, track.LanguageCode)
 		if err != nil {
-			lastErr = err
+			if errors.Is(err, youtube.ErrTranscriptDisabled) {
+				lastErr = ErrTranscriptDisabled
+				continue
+			}
+			lastErr = classifyTranscriptError(err)
 			continue
 		}
 		if len(transcript) == 0 {
-			lastErr = errors.New("transcript empty")
+			lastErr = ErrTranscriptUnavailable
 			continue
 		}
 		return convertTranscript(transcript), nil
 	}
 
 	if lastErr != nil {
-		return nil, fmt.Errorf("fetch transcript: %w", lastErr)
+		return nil, lastErr
 	}
 
-	return nil, errors.New("transcript not available")
+	return nil, ErrTranscriptUnavailable
 }
 
 func (s *YouTubeService) waitForRateLimit() {
@@ -170,4 +183,40 @@ func validateVideoID(id string) (string, error) {
 	}
 
 	return id, nil
+}
+
+func classifyVideoError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	errMsg := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(errMsg, "video is private"):
+		return fmt.Errorf("%w: %v", ErrVideoPrivate, err)
+	case strings.Contains(errMsg, "age restricted"):
+		return fmt.Errorf("%w: %v", ErrVideoAgeRestricted, err)
+	case strings.Contains(errMsg, "not found"), strings.Contains(errMsg, "404"):
+		return fmt.Errorf("%w: %v", ErrVideoNotFound, err)
+	case strings.Contains(errMsg, "rate limit"), strings.Contains(errMsg, "429"):
+		return fmt.Errorf("%w: %v", ErrRateLimited, err)
+	default:
+		return fmt.Errorf("fetch video metadata: %w", err)
+	}
+}
+
+func classifyTranscriptError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	errMsg := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(errMsg, "rate limit"), strings.Contains(errMsg, "429"):
+		return fmt.Errorf("%w: %v", ErrRateLimited, err)
+	case strings.Contains(errMsg, "not available"):
+		return ErrTranscriptUnavailable
+	default:
+		return fmt.Errorf("fetch transcript: %w", err)
+	}
 }

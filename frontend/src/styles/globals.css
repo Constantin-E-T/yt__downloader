@@ -50,6 +50,7 @@
   }
 }
 
+/* Accessibility: Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

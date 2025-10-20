@@ -33,10 +33,10 @@ export const Card = (props: CardProps): JSX.Element => {
   return (
     <div
       class={cn(
-        'rounded-2xl transition-shadow duration-150',
+        'rounded-2xl transition-all duration-300 ease-out',
         variantClasses[variant()],
         paddingMap[padding()],
-        local.hoverable && 'hover:shadow-2xl hover:shadow-primary-500/10',
+        local.hoverable && 'hover:shadow-xl hover:-translate-y-1 cursor-pointer',
         local.class
       )}
       {...rest}

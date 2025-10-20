@@ -22,6 +22,7 @@ type TranscriptViewerProps = {
 export const TranscriptViewer = (props: TranscriptViewerProps) => {
   const toast = useToast();
   const [query, setQuery] = createSignal('');
+  const [copied, setCopied] = createSignal(false);
 
   const filteredSegments = createMemo(() => {
     const q = query().trim().toLowerCase();
@@ -34,11 +35,13 @@ export const TranscriptViewer = (props: TranscriptViewerProps) => {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(buildTextExport(props.video, props.transcript));
+      setCopied(true);
       toast.addToast({
         type: 'success',
         title: 'Transcript copied',
         description: 'All segments copied to clipboard.',
       });
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Clipboard copy failed', error);
       toast.addToast({
@@ -90,7 +93,16 @@ export const TranscriptViewer = (props: TranscriptViewerProps) => {
         </div>
         <div class="flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" onClick={copyToClipboard}>
-            Copy all
+            {copied() ? (
+              <>
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Copied!
+              </>
+            ) : (
+              'Copy all'
+            )}
           </Button>
           <Button variant="secondary" size="sm" onClick={exportAsText}>
             Export TXT
