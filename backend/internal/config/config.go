@@ -20,8 +20,9 @@ type Config struct {
 	// AI Configuration
 	OpenAIAPIKey    string
 	AnthropicAPIKey string
-	AIProvider      string // "openai", "anthropic", or "both"
-	AIModel         string // "gpt-4", "gpt-3.5-turbo", "claude-3-opus", etc.
+	GoogleAPIKey    string
+	AIProvider      string // "openai", "anthropic", "google"
+	AIModel         string // "gpt-4", "gpt-3.5-turbo", "claude-3-opus", "gemini-1.5-flash", etc.
 	AIMaxTokens     int
 	AITemperature   float64
 }
@@ -55,6 +56,7 @@ func Load() (*Config, error) {
 	// AI Configuration
 	config.OpenAIAPIKey = os.Getenv("OPENAI_API_KEY")
 	config.AnthropicAPIKey = os.Getenv("ANTHROPIC_API_KEY")
+	config.GoogleAPIKey = os.Getenv("GOOGLE_API_KEY")
 	config.AIProvider = getEnvWithDefault("AI_PROVIDER", "openai")
 	config.AIModel = getEnvWithDefault("AI_MODEL", "gpt-4")
 
@@ -133,8 +135,12 @@ func (c *Config) Validate() error {
 		if c.AnthropicAPIKey == "" {
 			errors = append(errors, "ANTHROPIC_API_KEY is required when AI_PROVIDER is 'anthropic'")
 		}
+	case "google":
+		if c.GoogleAPIKey == "" {
+			errors = append(errors, "GOOGLE_API_KEY is required when AI_PROVIDER is 'google'")
+		}
 	default:
-		errors = append(errors, "AI_PROVIDER must be 'openai' or 'anthropic'")
+		errors = append(errors, "AI_PROVIDER must be 'openai', 'anthropic', or 'google'")
 	}
 
 	// Return combined errors if any
@@ -236,6 +242,7 @@ func LoadWithEnvFile(envFile string) (*Config, error) {
 	// AI Configuration
 	config.OpenAIAPIKey = os.Getenv("OPENAI_API_KEY")
 	config.AnthropicAPIKey = os.Getenv("ANTHROPIC_API_KEY")
+	config.GoogleAPIKey = os.Getenv("GOOGLE_API_KEY")
 	config.AIProvider = getEnvWithDefault("AI_PROVIDER", "openai")
 	config.AIModel = getEnvWithDefault("AI_MODEL", "gpt-4")
 

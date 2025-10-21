@@ -54,8 +54,19 @@ func main() {
 		}
 		aiProvider = openAIProvider
 	case "anthropic":
-		fmt.Fprintln(os.Stderr, "Anthropic provider is not yet implemented")
-		os.Exit(1)
+		anthropicProvider, providerErr := services.NewAnthropicProvider(cfg.AnthropicAPIKey, cfg.AIModel, cfg.AIMaxTokens, cfg.AITemperature)
+		if providerErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to configure Anthropic provider: %v\n", providerErr)
+			os.Exit(1)
+		}
+		aiProvider = anthropicProvider
+	case "google":
+		geminiProvider, providerErr := services.NewGeminiProvider(cfg.GoogleAPIKey, cfg.AIModel, cfg.AIMaxTokens, cfg.AITemperature)
+		if providerErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to configure Google Gemini provider: %v\n", providerErr)
+			os.Exit(1)
+		}
+		aiProvider = geminiProvider
 	default:
 		fmt.Fprintf(os.Stderr, "Unsupported AI provider: %s\n", cfg.AIProvider)
 		os.Exit(1)

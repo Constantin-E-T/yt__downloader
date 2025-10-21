@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -91,6 +93,8 @@ func (s *Server) handleExtractFromTranscript(w http.ResponseWriter, r *http.Requ
 	// Call AI service to extract content
 	aiExtraction, err := s.aiService.Extract(ctx, transcriptText, extractionType)
 	if err != nil {
+		// DEBUG: Log the actual error
+		fmt.Fprintf(os.Stderr, "DEBUG: AI Extract error: %v (type: %T)\n", err, err)
 		handleAIExtractionError(w, err)
 		return
 	}

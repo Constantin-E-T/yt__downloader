@@ -1,76 +1,36 @@
-## Frontend — YouTube Transcript Downloader
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Modern Solid.js application built with pnpm, Vite, Tailwind CSS, and TanStack Query. This project powers the Phase 4 frontend foundation with responsive, accessible, and SEO-friendly defaults for 2025.
+## Getting Started
 
-### Prerequisites
-
-- Node.js ≥ 20
-- pnpm ≥ 9
-
-### Getting Started
+First, run the development server:
 
 ```bash
-pnpm install
+npm run dev
+# or
+yarn dev
+# or
 pnpm dev
+# or
+bun dev
 ```
 
-The development server runs on [http://localhost:3000](http://localhost:3000) with the backend proxied through `/api`.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Core Scripts
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- `pnpm dev` – Start the Vite development server
-- `pnpm build` – Produce an optimized production bundle
-- `pnpm preview` – Preview the production build locally
-- `pnpm typecheck` – Run TypeScript in `--noEmit` mode
-- `pnpm lint` – Execute ESLint with Solid + TypeScript rules
-- `pnpm format` – Format source files using Prettier
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-### Project Structure
+## Learn More
 
-```
-src/
-  components/    # Reusable UI + feature components
-  pages/         # Route-level components
-  services/      # API integrations and data helpers
-  types/         # Shared TypeScript contracts
-  utils/         # Utility helpers (e.g., class merging)
-  styles/        # Global Tailwind entrypoint
-  data/          # Static data (languages, etc.)
-  hooks/         # Shared Solid hooks
-```
+To learn more about Next.js, take a look at the following resources:
 
-### Theme & Dark Mode
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-- The theme helper in `src/utils/theme.ts` manages a persisted `light | dark | system` preference (stored in `localStorage`).
-- The header exposes a theme dropdown that cycles between Light, Dark, and System modes.
-- All primitives (`Button`, `Card`, `Modal`, etc.) include matching `dark:` Tailwind variants, so the experience remains consistent across themes.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-### Environment Variables
+## Deploy on Vercel
 
-Copy `.env.example` to `.env.local` and adjust as needed:
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-```
-VITE_API_URL=http://localhost:8080/api
-```
-
-### Quality Targets
-
-- Lighthouse scores ≥ 90 across Performance, Accessibility, SEO
-- TypeScript strict mode with zero errors
-- ESLint + Prettier clean
-- Responsive layout verified at 375px, 768px, 1440px
-- Keyboard-only navigation verified (Tab, Shift+Tab, Arrow keys)
-- Lighthouse Accessibility score ≥ 95 (Chrome DevTools > Lighthouse)
-
-### Deployment
-
-1. `pnpm build`
-2. Serve the `dist/` directory via your hosting provider (Netlify, Vercel, Cloudflare Pages, etc.)
-3. Ensure environment variables are set (e.g., `VITE_API_URL`)
-
-### Additional Resources
-
-- [Solid.js Documentation](https://docs.solidjs.com/)
-- [TanStack Query for Solid](https://tanstack.com/query/v5/docs/solid/overview)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Component Reference](./src/components/README.md)
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
