@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
@@ -347,7 +348,9 @@ func decodeSummaryPayload(raw string) (*summaryPayload, error) {
 
 	var payload summaryPayload
 	if err := json.Unmarshal([]byte(normalized), &payload); err != nil {
-		return nil, err
+		// Log the actual response for debugging
+		log.Printf("ERROR: Failed to parse AI summary response. Raw response (first 500 chars): %s", truncateString(normalized, 500))
+		return nil, fmt.Errorf("failed to parse JSON response: %w", err)
 	}
 
 	payload.Text = strings.TrimSpace(payload.Text)
@@ -362,6 +365,13 @@ func decodeSummaryPayload(raw string) (*summaryPayload, error) {
 	}
 
 	return &payload, nil
+}
+
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 func convertPayloadSections(sections []summaryPayloadSec) []SummarySection {
