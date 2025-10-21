@@ -1,31 +1,14 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { Fragment } from "react";
+
+import { TranscriptMeta, TranscriptTable } from "@/components/transcript-table";
+import {
+  API_BASE_URL,
+  requestTranscript,
+  type TranscriptResponse,
+} from "@/lib/api/transcripts";
 
 export const dynamic = "force-dynamic";
-
-const API_BASE_URL =
-  process.env.BACKEND_API_URL ??
-  process.env.NEXT_PUBLIC_BACKEND_URL ??
-  "http://localhost:8080";
-
-type TranscriptLine = {
-  start: number;
-  duration: number;
-  text: string;
-};
-
-type TranscriptResponse = {
-  video_id: string;
-  title: string;
-  language: string;
-  transcript: TranscriptLine[];
-};
-
-type ErrorResponse = {
-  error: string;
-  message?: string;
-  status_code?: number;
-};
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -46,74 +29,6 @@ function normaliseParam(value: string | string[] | undefined): string | undefine
   return undefined;
 }
 
-function formatTimestamp(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function highlightText(text: string, query?: string) {
-  if (!query) return text;
-  const escaped = escapeRegExp(query);
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
-  const target = query.toLowerCase();
-
-  return parts.map((part, index) => {
-    if (part.toLowerCase() === target) {
-      return (
-        <mark key={`${part}-${index}`} className="rounded-sm bg-primary/20 px-1 py-0.5">
-          {part}
-        </mark>
-      );
-    }
-    return <Fragment key={`${part}-${index}`}>{part}</Fragment>;
-  });
-}
-
-async function fetchTranscript(
-  videoUrl: string,
-  language?: string
-): Promise<{ data?: TranscriptResponse; error?: string }> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/transcripts/fetch`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        video_url: videoUrl,
-        language,
-      }),
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as ErrorResponse | null;
-      const message =
-        payload?.error ??
-        payload?.message ??
-        `Unexpected error while fetching transcript (status ${response.status})`;
-      return { error: message };
-    }
-
-    const payload = (await response.json()) as TranscriptResponse;
-    return { data: payload };
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? `Failed to reach backend: ${error.message}`
-        : "Failed to reach backend: unknown error";
-    return { error: message };
-  }
-}
-
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const videoUrl = normaliseParam(params.video);
@@ -124,7 +39,10 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   let errorMessage: string | undefined;
 
   if (videoUrl) {
-    const { data, error } = await fetchTranscript(videoUrl, language);
+    const { data, error } = await requestTranscript({
+      video_url: videoUrl,
+      language,
+    });
     transcriptData = data;
     errorMessage = error;
   }
@@ -230,60 +148,29 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
               <span className="font-medium text-foreground">Language:</span>{" "}
               {transcriptData.language.toUpperCase()}
             </div>
+            <TranscriptMeta transcript={transcriptData.transcript} />
           </header>
 
           <TranscriptTable transcript={transcriptData.transcript} query={query} />
+
+          <div className="flex justify-end">
+            {(() => {
+              const params = new URLSearchParams();
+              params.set("transcript", transcriptData.transcript_id);
+              if (language) params.set("language", language);
+              if (query) params.set("query", query);
+              return (
+                <Link
+                  href={`/transcripts/${transcriptData.video_id}?${params.toString()}`}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                >
+                  View detailed transcript →
+                </Link>
+              );
+            })()}
+          </div>
         </section>
       ) : null}
-    </div>
-  );
-}
-
-function TranscriptTable({
-  transcript,
-  query,
-}: {
-  transcript: TranscriptLine[];
-  query?: string;
-}) {
-  const lines =
-    query && query.length > 0
-      ? transcript.filter((line) => line.text.toLowerCase().includes(query.toLowerCase()))
-      : transcript;
-
-  if (query && lines.length === 0) {
-    return (
-      <div className="rounded-md border border-border bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
-        No transcript lines matched &ldquo;{query}&rdquo;. Try a different keyword.
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-h-[520px] overflow-y-auto rounded-lg border border-border">
-      <table className="w-full table-fixed border-collapse text-left text-sm">
-        <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-          <tr>
-            <th className="w-24 px-4 py-3">Start</th>
-            <th className="w-24 px-4 py-3">Duration</th>
-            <th className="px-4 py-3">Text</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((line, index) => (
-            <tr
-              key={`${line.start}-${index}`}
-              className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}
-            >
-              <td className="px-4 py-3 font-mono text-xs">{formatTimestamp(line.start)}</td>
-              <td className="px-4 py-3 font-mono text-xs">{formatTimestamp(line.duration)}</td>
-              <td className="px-4 py-3 text-sm text-foreground">
-                {highlightText(line.text, query)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

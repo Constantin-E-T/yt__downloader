@@ -23,10 +23,11 @@ type TranscriptLine struct {
 
 // TranscriptResponse is the API response for transcript fetch requests.
 type TranscriptResponse struct {
-	VideoID    string           `json:"video_id"`
-	Title      string           `json:"title"`
-	Language   string           `json:"language"`
-	Transcript []TranscriptLine `json:"transcript"`
+	TranscriptID string           `json:"transcript_id"`
+	VideoID      string           `json:"video_id"`
+	Title        string           `json:"title"`
+	Language     string           `json:"language"`
+	Transcript   []TranscriptLine `json:"transcript"`
 }
 
 func fetchMetadataWithContext(ctx context.Context, yt youtubeService, videoID string) (*services.VideoMetadata, error) {

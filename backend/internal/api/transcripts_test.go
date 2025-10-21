@@ -62,6 +62,7 @@ func TestHandleFetchTranscript_Success(t *testing.T) {
 	var resp TranscriptResponse
 	err = json.NewDecoder(rec.Body).Decode(&resp)
 	require.NoError(t, err)
+	assert.Equal(t, transcriptRepo.saved[0].ID, resp.TranscriptID)
 	assert.Equal(t, sampleVideoID, resp.VideoID)
 	assert.Equal(t, "Sample Title", resp.Title)
 	assert.Equal(t, defaultTranscriptLanguage, resp.Language)

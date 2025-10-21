@@ -143,10 +143,11 @@ func (s *Server) handleFetchTranscript(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := TranscriptResponse{
-		VideoID:    metadata.ID,
-		Title:      metadata.Title,
-		Language:   lang,
-		Transcript: apiLines,
+		TranscriptID: transcriptModel.ID,
+		VideoID:      metadata.ID,
+		Title:        metadata.Title,
+		Language:     lang,
+		Transcript:   apiLines,
 	}
 
 	writeJSON(w, http.StatusOK, resp)
