@@ -13,7 +13,7 @@ import (
 
 func TestCORSHeaders(t *testing.T) {
 	t.Run("includes CORS headers in response", func(t *testing.T) {
-		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodOptions, "/api/v1/health", nil)
@@ -35,7 +35,7 @@ func TestShutdown(t *testing.T) {
 	})
 
 	t.Run("shuts down successfully", func(t *testing.T) {
-		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -64,7 +64,7 @@ func TestShutdown(t *testing.T) {
 
 func TestStartWithContext(t *testing.T) {
 	t.Run("starts and stops gracefully when context is cancelled", func(t *testing.T) {
-		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())

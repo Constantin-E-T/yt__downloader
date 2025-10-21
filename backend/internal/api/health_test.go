@@ -14,7 +14,7 @@ import (
 
 func TestHealthEndpoint(t *testing.T) {
 	t.Run("healthy state returns 200", func(t *testing.T) {
-		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -32,7 +32,7 @@ func TestHealthEndpoint(t *testing.T) {
 	})
 
 	t.Run("database failure returns 503", func(t *testing.T) {
-		server, err := NewServer(mockConfig(), &mockDB{pingError: errors.New("boom")}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(mockConfig(), &mockDB{pingError: errors.New("boom")}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
@@ -49,7 +49,7 @@ func TestHealthEndpoint(t *testing.T) {
 	})
 
 	t.Run("response includes timestamp and checks", func(t *testing.T) {
-		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)

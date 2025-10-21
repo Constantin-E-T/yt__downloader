@@ -15,6 +15,7 @@ func applyMigrations(tb testing.TB, database DB) {
 	migrations := []string{
 		"001_initial_schema_up.sql",
 		"002_add_indexes_up.sql",
+		"003_ai_summaries_up.sql",
 	}
 
 	for _, name := range migrations {

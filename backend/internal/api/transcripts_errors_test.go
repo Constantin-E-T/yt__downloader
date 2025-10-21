@@ -116,7 +116,7 @@ func TestHandleFetchTranscript_TranscriptRepoFailure(t *testing.T) {
 	videoRepo := &recordingVideoRepo{}
 	transcriptRepo := &recordingTranscriptRepo{err: errors.New("insert failed")}
 
-	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
+	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 
 	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/" + sampleVideoID})
@@ -157,7 +157,7 @@ func testServer(t *testing.T, yt youtubeService, videoRepo videoRepository, tran
 	t.Helper()
 
 	cfg := &config.Config{APIPort: 8080}
-	server, err := NewServer(cfg, &mockDB{}, yt, videoRepo, transcriptRepo)
+	server, err := NewServer(cfg, &mockDB{}, yt, videoRepo, transcriptRepo, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 	return server
 }

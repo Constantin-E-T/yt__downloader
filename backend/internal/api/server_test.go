@@ -81,6 +81,52 @@ func (noopTranscriptRepo) SaveTranscript(context.Context, *db.Transcript) error 
 	return nil
 }
 
+func (noopTranscriptRepo) GetTranscriptByID(context.Context, string) (*db.Transcript, error) {
+	return nil, db.ErrNotFound
+}
+
+type noopAIService struct{}
+
+func (noopAIService) Summarize(context.Context, string, string) (*services.AISummary, error) {
+	return &services.AISummary{}, nil
+}
+
+func (noopAIService) Extract(context.Context, string, string) (*services.AIExtraction, error) {
+	return &services.AIExtraction{}, nil
+}
+
+func (noopAIService) Answer(context.Context, string, string) (*services.AIAnswer, error) {
+	return &services.AIAnswer{}, nil
+}
+
+type noopAISummaryRepo struct{}
+
+func (noopAISummaryRepo) CreateAISummary(context.Context, *db.AISummary) error {
+	return nil
+}
+
+func (noopAISummaryRepo) GetAISummary(context.Context, string, string) (*db.AISummary, error) {
+	return nil, db.ErrNotFound
+}
+
+func (noopAISummaryRepo) ListAISummaries(context.Context, string) ([]*db.AISummary, error) {
+	return nil, nil
+}
+
+type noopAIExtractionRepo struct{}
+
+func (noopAIExtractionRepo) CreateAIExtraction(context.Context, *db.AIExtraction) error {
+	return nil
+}
+
+func (noopAIExtractionRepo) GetAIExtraction(context.Context, string, string) (*db.AIExtraction, error) {
+	return nil, db.ErrNotFound
+}
+
+func (noopAIExtractionRepo) ListAIExtractions(context.Context, string) ([]*db.AIExtraction, error) {
+	return nil, nil
+}
+
 // mockConfig creates a test configuration
 func mockConfig() *config.Config {
 	return &config.Config{
@@ -93,7 +139,7 @@ func TestNewServer(t *testing.T) {
 		cfg := mockConfig()
 		database := &mockDB{}
 
-		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 
 		require.NoError(t, err)
 		assert.NotNil(t, server)
@@ -106,7 +152,7 @@ func TestNewServer(t *testing.T) {
 	t.Run("returns error when config is nil", func(t *testing.T) {
 		database := &mockDB{}
 
-		server, err := NewServer(nil, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(nil, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 
 		assert.Error(t, err)
 		assert.Nil(t, server)
@@ -116,7 +162,7 @@ func TestNewServer(t *testing.T) {
 	t.Run("returns error when database is nil", func(t *testing.T) {
 		cfg := mockConfig()
 
-		server, err := NewServer(cfg, nil, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(cfg, nil, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 		assert.Error(t, err)
 		assert.Nil(t, server)
 		assert.Contains(t, err.Error(), "database cannot be nil")
@@ -126,10 +172,32 @@ func TestNewServer(t *testing.T) {
 		cfg := mockConfig()
 		database := &mockDB{}
 
-		server, err := NewServer(cfg, database, nil, noopVideoRepo{}, noopTranscriptRepo{})
+		server, err := NewServer(cfg, database, nil, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 
 		assert.Error(t, err)
 		assert.Nil(t, server)
 		assert.Contains(t, err.Error(), "youtube service cannot be nil")
+	})
+
+	t.Run("returns error when ai service is nil", func(t *testing.T) {
+		cfg := mockConfig()
+		database := &mockDB{}
+
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, nil, noopAISummaryRepo{}, noopAIExtractionRepo{})
+
+		assert.Error(t, err)
+		assert.Nil(t, server)
+		assert.Contains(t, err.Error(), "ai service cannot be nil")
+	})
+
+	t.Run("returns error when ai summary repository is nil", func(t *testing.T) {
+		cfg := mockConfig()
+		database := &mockDB{}
+
+		server, err := NewServer(cfg, database, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, nil, noopAIExtractionRepo{})
+
+		assert.Error(t, err)
+		assert.Nil(t, server)
+		assert.Contains(t, err.Error(), "ai summary repository cannot be nil")
 	})
 }

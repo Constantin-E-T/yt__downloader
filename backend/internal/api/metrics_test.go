@@ -11,7 +11,7 @@ import (
 )
 
 func TestMetricsEndpoint(t *testing.T) {
-	server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{})
+	server, err := NewServer(mockConfig(), &mockDB{}, noopYouTubeService{}, noopVideoRepo{}, noopTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 
 	t.Run("returns metrics at root path", func(t *testing.T) {

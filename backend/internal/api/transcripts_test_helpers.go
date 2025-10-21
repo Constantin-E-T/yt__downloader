@@ -70,3 +70,13 @@ func (r *recordingTranscriptRepo) SaveTranscript(_ context.Context, transcript *
 	r.saved = append(r.saved, &clone)
 	return nil
 }
+
+func (r *recordingTranscriptRepo) GetTranscriptByID(_ context.Context, id string) (*db.Transcript, error) {
+	for _, transcript := range r.saved {
+		if transcript.ID == id {
+			clone := *transcript
+			return &clone, nil
+		}
+	}
+	return nil, db.ErrNotFound
+}

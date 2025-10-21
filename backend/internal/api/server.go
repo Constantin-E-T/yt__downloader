@@ -29,21 +29,43 @@ type videoRepository interface {
 
 type transcriptRepository interface {
 	SaveTranscript(ctx context.Context, transcript *db.Transcript) error
+	GetTranscriptByID(ctx context.Context, id string) (*db.Transcript, error)
+}
+
+type aiService interface {
+	Summarize(ctx context.Context, text string, summaryType string) (*services.AISummary, error)
+	Extract(ctx context.Context, text string, extractionType string) (*services.AIExtraction, error)
+	Answer(ctx context.Context, text string, question string) (*services.AIAnswer, error)
+}
+
+type aiSummaryRepository interface {
+	CreateAISummary(ctx context.Context, summary *db.AISummary) error
+	GetAISummary(ctx context.Context, transcriptID string, summaryType string) (*db.AISummary, error)
+	ListAISummaries(ctx context.Context, transcriptID string) ([]*db.AISummary, error)
+}
+
+type aiExtractionRepository interface {
+	CreateAIExtraction(ctx context.Context, extraction *db.AIExtraction) error
+	GetAIExtraction(ctx context.Context, transcriptID string, extractionType string) (*db.AIExtraction, error)
+	ListAIExtractions(ctx context.Context, transcriptID string) ([]*db.AIExtraction, error)
 }
 
 // Server represents the HTTP API server
 type Server struct {
-	db              db.DB
-	router          chi.Router
-	srv             *http.Server
-	config          *config.Config
-	youtube         youtubeService
-	videoRepository videoRepository
-	transcriptRepo  transcriptRepository
+	db                 db.DB
+	router             chi.Router
+	srv                *http.Server
+	config             *config.Config
+	youtube            youtubeService
+	videoRepository    videoRepository
+	transcriptRepo     transcriptRepository
+	aiService          aiService
+	aiSummaryRepo      aiSummaryRepository
+	aiExtractionRepo   aiExtractionRepository
 }
 
 // NewServer creates a new API server with the given configuration and database connection
-func NewServer(cfg *config.Config, database db.DB, ytSvc youtubeService, videoRepo videoRepository, transcriptRepo transcriptRepository) (*Server, error) {
+func NewServer(cfg *config.Config, database db.DB, ytSvc youtubeService, videoRepo videoRepository, transcriptRepo transcriptRepository, aiSvc aiService, summaryRepo aiSummaryRepository, extractionRepo aiExtractionRepository) (*Server, error) {
 	if cfg == nil {
 		return nil, errors.New("config cannot be nil")
 	}
@@ -59,14 +81,26 @@ func NewServer(cfg *config.Config, database db.DB, ytSvc youtubeService, videoRe
 	if transcriptRepo == nil {
 		return nil, errors.New("transcript repository cannot be nil")
 	}
+	if aiSvc == nil {
+		return nil, errors.New("ai service cannot be nil")
+	}
+	if summaryRepo == nil {
+		return nil, errors.New("ai summary repository cannot be nil")
+	}
+	if extractionRepo == nil {
+		return nil, errors.New("ai extraction repository cannot be nil")
+	}
 
 	s := &Server{
-		db:              database,
-		config:          cfg,
-		router:          chi.NewRouter(),
-		youtube:         ytSvc,
-		videoRepository: videoRepo,
-		transcriptRepo:  transcriptRepo,
+		db:               database,
+		config:           cfg,
+		router:           chi.NewRouter(),
+		youtube:          ytSvc,
+		videoRepository:  videoRepo,
+		transcriptRepo:   transcriptRepo,
+		aiService:        aiSvc,
+		aiSummaryRepo:    summaryRepo,
+		aiExtractionRepo: extractionRepo,
 	}
 
 	// Setup routes and middleware
@@ -115,6 +149,15 @@ func (s *Server) setupRoutes() {
 		r.Route("/v1", func(r chi.Router) {
 			r.Get("/health", s.handleHealth)
 			r.Post("/transcripts/fetch", s.handleFetchTranscript)
+			r.Route("/transcripts/{id}/summarize", func(r chi.Router) {
+				r.Post("/", s.handleSummarizeTranscript)
+			})
+			r.Route("/transcripts/{id}/extract", func(r chi.Router) {
+				r.Post("/", s.handleExtractFromTranscript)
+			})
+			r.Route("/transcripts/{id}/qa", func(r chi.Router) {
+				r.Post("/", s.handleTranscriptQA)
+			})
 		})
 	})
 }

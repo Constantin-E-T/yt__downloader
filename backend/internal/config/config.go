@@ -16,6 +16,14 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	APIPort    int
+
+	// AI Configuration
+	OpenAIAPIKey    string
+	AnthropicAPIKey string
+	AIProvider      string // "openai", "anthropic", or "both"
+	AIModel         string // "gpt-4", "gpt-3.5-turbo", "claude-3-opus", etc.
+	AIMaxTokens     int
+	AITemperature   float64
 }
 
 // Load reads configuration from environment variables
@@ -42,6 +50,22 @@ func Load() (*Config, error) {
 	config.APIPort, err = getEnvIntWithDefault("API_PORT", 8080)
 	if err != nil {
 		return nil, fmt.Errorf("invalid API_PORT: %w", err)
+	}
+
+	// AI Configuration
+	config.OpenAIAPIKey = os.Getenv("OPENAI_API_KEY")
+	config.AnthropicAPIKey = os.Getenv("ANTHROPIC_API_KEY")
+	config.AIProvider = getEnvWithDefault("AI_PROVIDER", "openai")
+	config.AIModel = getEnvWithDefault("AI_MODEL", "gpt-4")
+
+	config.AIMaxTokens, err = getEnvIntWithDefault("AI_MAX_TOKENS", 4000)
+	if err != nil {
+		return nil, fmt.Errorf("invalid AI_MAX_TOKENS: %w", err)
+	}
+
+	config.AITemperature, err = getEnvFloatWithDefault("AI_TEMPERATURE", 0.7)
+	if err != nil {
+		return nil, fmt.Errorf("invalid AI_TEMPERATURE: %w", err)
 	}
 
 	// Validate the configuration
@@ -95,6 +119,24 @@ func (c *Config) Validate() error {
 		errors = append(errors, "API_PORT must be between 1 and 65535")
 	}
 
+	// AI configuration validation
+	if c.OpenAIAPIKey == "" && c.AnthropicAPIKey == "" {
+		errors = append(errors, "at least one AI provider API key required")
+	}
+
+	switch c.AIProvider {
+	case "openai":
+		if c.OpenAIAPIKey == "" {
+			errors = append(errors, "OPENAI_API_KEY is required when AI_PROVIDER is 'openai'")
+		}
+	case "anthropic":
+		if c.AnthropicAPIKey == "" {
+			errors = append(errors, "ANTHROPIC_API_KEY is required when AI_PROVIDER is 'anthropic'")
+		}
+	default:
+		errors = append(errors, "AI_PROVIDER must be 'openai' or 'anthropic'")
+	}
+
 	// Return combined errors if any
 	if len(errors) > 0 {
 		errorMsg := "validation errors: "
@@ -145,6 +187,18 @@ func getEnvIntWithDefault(key string, defaultValue int) (int, error) {
 	return defaultValue, nil
 }
 
+// getEnvFloatWithDefault gets an environment variable as float64 or returns a default value
+func getEnvFloatWithDefault(key string, defaultValue float64) (float64, error) {
+	if value := os.Getenv(key); value != "" {
+		parsed, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse %s as float: %w", key, err)
+		}
+		return parsed, nil
+	}
+	return defaultValue, nil
+}
+
 // MustLoad loads configuration and panics if it fails
 // Use this only in main() or init() functions where failure should be fatal
 func MustLoad() *Config {
@@ -179,6 +233,22 @@ func LoadWithEnvFile(envFile string) (*Config, error) {
 		return nil, fmt.Errorf("invalid API_PORT: %w", err)
 	}
 
+	// AI Configuration
+	config.OpenAIAPIKey = os.Getenv("OPENAI_API_KEY")
+	config.AnthropicAPIKey = os.Getenv("ANTHROPIC_API_KEY")
+	config.AIProvider = getEnvWithDefault("AI_PROVIDER", "openai")
+	config.AIModel = getEnvWithDefault("AI_MODEL", "gpt-4")
+
+	config.AIMaxTokens, err = getEnvIntWithDefault("AI_MAX_TOKENS", 4000)
+	if err != nil {
+		return nil, fmt.Errorf("invalid AI_MAX_TOKENS: %w", err)
+	}
+
+	config.AITemperature, err = getEnvFloatWithDefault("AI_TEMPERATURE", 0.7)
+	if err != nil {
+		return nil, fmt.Errorf("invalid AI_TEMPERATURE: %w", err)
+	}
+
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
@@ -195,5 +265,11 @@ func GetDefaults() *Config {
 		DBUser:     "postgres",
 		DBPassword: "postgres", // Default password for development
 		APIPort:    8080,
+
+		// AI defaults
+		AIProvider:    "openai",
+		AIModel:       "gpt-4",
+		AIMaxTokens:   4000,
+		AITemperature: 0.7,
 	}
 }

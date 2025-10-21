@@ -37,7 +37,7 @@ func TestHandleFetchTranscript_Success(t *testing.T) {
 	videoRepo := &recordingVideoRepo{}
 	transcriptRepo := &recordingTranscriptRepo{}
 
-	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
+	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 
 	payload := TranscriptRequest{
@@ -76,7 +76,7 @@ func TestHandleFetchTranscript_Success(t *testing.T) {
 func TestHandleFetchTranscript_InvalidRequest(t *testing.T) {
 	cfg := &config.Config{APIPort: 8080}
 	database := &mockDB{}
-	server, err := NewServer(cfg, database, &fakeYouTubeService{}, &recordingVideoRepo{}, &recordingTranscriptRepo{})
+	server, err := NewServer(cfg, database, &fakeYouTubeService{}, &recordingVideoRepo{}, &recordingTranscriptRepo{}, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/transcripts/fetch", bytes.NewReader([]byte(`{"video_url":""}`)))
@@ -104,7 +104,7 @@ func TestHandleFetchTranscript_MissingTranscript(t *testing.T) {
 	videoRepo := &recordingVideoRepo{}
 	transcriptRepo := &recordingTranscriptRepo{}
 
-	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
+	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 
 	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/" + sampleVideoID})
@@ -141,7 +141,7 @@ func TestHandleFetchTranscript_DatabaseFailure(t *testing.T) {
 	videoRepo := &recordingVideoRepo{err: errors.New("write failed")}
 	transcriptRepo := &recordingTranscriptRepo{}
 
-	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo)
+	server, err := NewServer(cfg, database, youTube, videoRepo, transcriptRepo, noopAIService{}, noopAISummaryRepo{}, noopAIExtractionRepo{})
 	require.NoError(t, err)
 
 	body, err := json.Marshal(TranscriptRequest{VideoURL: "https://youtu.be/" + sampleVideoID})

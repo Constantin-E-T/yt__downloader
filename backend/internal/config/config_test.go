@@ -11,12 +11,13 @@ import (
 func TestLoad_ValidEnvironment(t *testing.T) {
 	// Set up environment variables
 	envVars := map[string]string{
-		"DB_HOST":     "testhost",
-		"DB_PORT":     "3306",
-		"DB_NAME":     "testdb",
-		"DB_USER":     "testuser",
-		"DB_PASSWORD": "testpass",
-		"API_PORT":    "9000",
+		"DB_HOST":        "testhost",
+		"DB_PORT":        "3306",
+		"DB_NAME":        "testdb",
+		"DB_USER":        "testuser",
+		"DB_PASSWORD":    "testpass",
+		"API_PORT":       "9000",
+		"OPENAI_API_KEY": "test-openai-key",
 	}
 
 	// Set environment variables
@@ -56,6 +57,10 @@ func TestLoad_DefaultValues(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Unsetenv("DB_PASSWORD")
 
+	err = os.Setenv("OPENAI_API_KEY", "test-openai-key")
+	require.NoError(t, err)
+	defer os.Unsetenv("OPENAI_API_KEY")
+
 	config, err := Load()
 	require.NoError(t, err)
 	require.NotNil(t, config)
@@ -76,6 +81,10 @@ func TestLoad_MissingPassword(t *testing.T) {
 		os.Unsetenv(key)
 	}
 
+	err := os.Setenv("OPENAI_API_KEY", "test-openai-key")
+	require.NoError(t, err)
+	defer os.Unsetenv("OPENAI_API_KEY")
+
 	config, err := Load()
 	assert.Error(t, err)
 	assert.Nil(t, config)
@@ -91,6 +100,10 @@ func TestLoad_InvalidPort(t *testing.T) {
 	err = os.Setenv("DB_PASSWORD", "testpass")
 	require.NoError(t, err)
 	defer os.Unsetenv("DB_PASSWORD")
+
+	err = os.Setenv("OPENAI_API_KEY", "test-openai-key")
+	require.NoError(t, err)
+	defer os.Unsetenv("OPENAI_API_KEY")
 
 	config, err := Load()
 	assert.Error(t, err)
@@ -108,6 +121,10 @@ func TestLoad_InvalidAPIPort(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Unsetenv("DB_PASSWORD")
 
+	err = os.Setenv("OPENAI_API_KEY", "test-openai-key")
+	require.NoError(t, err)
+	defer os.Unsetenv("OPENAI_API_KEY")
+
 	config, err := Load()
 	assert.Error(t, err)
 	assert.Nil(t, config)
@@ -116,12 +133,15 @@ func TestLoad_InvalidAPIPort(t *testing.T) {
 
 func TestValidate_ValidConfig(t *testing.T) {
 	config := &Config{
-		DBHost:     "localhost",
-		DBPort:     5432,
-		DBName:     "testdb",
-		DBUser:     "testuser",
-		DBPassword: "testpass",
-		APIPort:    8080,
+		DBHost:          "localhost",
+		DBPort:          5432,
+		DBName:          "testdb",
+		DBUser:          "testuser",
+		DBPassword:      "testpass",
+		APIPort:         8080,
+		AIProvider:      "openai",
+		OpenAIAPIKey:    "test-openai-key",
+		AnthropicAPIKey: "",
 	}
 
 	err := config.Validate()
@@ -137,48 +157,56 @@ func TestValidate_MissingRequiredFields(t *testing.T) {
 		{
 			name: "missing DB_HOST",
 			config: &Config{
-				DBHost:     "",
-				DBPort:     5432,
-				DBName:     "testdb",
-				DBUser:     "testuser",
-				DBPassword: "testpass",
-				APIPort:    8080,
+				DBHost:       "",
+				DBPort:       5432,
+				DBName:       "testdb",
+				DBUser:       "testuser",
+				DBPassword:   "testpass",
+				APIPort:      8080,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "DB_HOST is required",
 		},
 		{
 			name: "missing DB_NAME",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     5432,
-				DBName:     "",
-				DBUser:     "testuser",
-				DBPassword: "testpass",
-				APIPort:    8080,
+				DBHost:       "localhost",
+				DBPort:       5432,
+				DBName:       "",
+				DBUser:       "testuser",
+				DBPassword:   "testpass",
+				APIPort:      8080,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "DB_NAME is required",
 		},
 		{
 			name: "missing DB_USER",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     5432,
-				DBName:     "testdb",
-				DBUser:     "",
-				DBPassword: "testpass",
-				APIPort:    8080,
+				DBHost:       "localhost",
+				DBPort:       5432,
+				DBName:       "testdb",
+				DBUser:       "",
+				DBPassword:   "testpass",
+				APIPort:      8080,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "DB_USER is required",
 		},
 		{
 			name: "missing DB_PASSWORD",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     5432,
-				DBName:     "testdb",
-				DBUser:     "testuser",
-				DBPassword: "",
-				APIPort:    8080,
+				DBHost:       "localhost",
+				DBPort:       5432,
+				DBName:       "testdb",
+				DBUser:       "testuser",
+				DBPassword:   "",
+				APIPort:      8080,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "DB_PASSWORD is required",
 		},
@@ -202,48 +230,56 @@ func TestValidate_InvalidPorts(t *testing.T) {
 		{
 			name: "DB_PORT too low",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     0,
-				DBName:     "testdb",
-				DBUser:     "testuser",
-				DBPassword: "testpass",
-				APIPort:    8080,
+				DBHost:       "localhost",
+				DBPort:       0,
+				DBName:       "testdb",
+				DBUser:       "testuser",
+				DBPassword:   "testpass",
+				APIPort:      8080,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "DB_PORT must be between 1 and 65535",
 		},
 		{
 			name: "DB_PORT too high",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     65536,
-				DBName:     "testdb",
-				DBUser:     "testuser",
-				DBPassword: "testpass",
-				APIPort:    8080,
+				DBHost:       "localhost",
+				DBPort:       65536,
+				DBName:       "testdb",
+				DBUser:       "testuser",
+				DBPassword:   "testpass",
+				APIPort:      8080,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "DB_PORT must be between 1 and 65535",
 		},
 		{
 			name: "API_PORT too low",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     5432,
-				DBName:     "testdb",
-				DBUser:     "testuser",
-				DBPassword: "testpass",
-				APIPort:    -1,
+				DBHost:       "localhost",
+				DBPort:       5432,
+				DBName:       "testdb",
+				DBUser:       "testuser",
+				DBPassword:   "testpass",
+				APIPort:      -1,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "API_PORT must be between 1 and 65535",
 		},
 		{
 			name: "API_PORT too high",
 			config: &Config{
-				DBHost:     "localhost",
-				DBPort:     5432,
-				DBName:     "testdb",
-				DBUser:     "testuser",
-				DBPassword: "testpass",
-				APIPort:    70000,
+				DBHost:       "localhost",
+				DBPort:       5432,
+				DBName:       "testdb",
+				DBUser:       "testuser",
+				DBPassword:   "testpass",
+				APIPort:      70000,
+				AIProvider:   "openai",
+				OpenAIAPIKey: "test-openai-key",
 			},
 			expected: "API_PORT must be between 1 and 65535",
 		},
@@ -260,12 +296,14 @@ func TestValidate_InvalidPorts(t *testing.T) {
 
 func TestValidate_MultipleErrors(t *testing.T) {
 	config := &Config{
-		DBHost:     "",    // Missing
-		DBPort:     0,     // Invalid
-		DBName:     "",    // Missing
-		DBUser:     "",    // Missing
-		DBPassword: "",    // Missing
-		APIPort:    70000, // Invalid
+		DBHost:       "",    // Missing
+		DBPort:       0,     // Invalid
+		DBName:       "",    // Missing
+		DBUser:       "",    // Missing
+		DBPassword:   "",    // Missing
+		APIPort:      70000, // Invalid
+		AIProvider:   "openai",
+		OpenAIAPIKey: "test-openai-key",
 	}
 
 	err := config.Validate()
@@ -278,6 +316,52 @@ func TestValidate_MultipleErrors(t *testing.T) {
 	assert.Contains(t, errorMsg, "DB_PASSWORD is required")
 	assert.Contains(t, errorMsg, "DB_PORT must be between 1 and 65535")
 	assert.Contains(t, errorMsg, "API_PORT must be between 1 and 65535")
+}
+
+func TestValidate_AIConfig(t *testing.T) {
+	base := &Config{
+		DBHost:     "localhost",
+		DBPort:     5432,
+		DBName:     "testdb",
+		DBUser:     "testuser",
+		DBPassword: "testpass",
+		APIPort:    8080,
+	}
+
+	t.Run("requires at least one API key", func(t *testing.T) {
+		cfg := *base
+		cfg.AIProvider = "openai"
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "at least one AI provider API key required")
+	})
+
+	t.Run("requires openai key when provider is openai", func(t *testing.T) {
+		cfg := *base
+		cfg.AIProvider = "openai"
+		cfg.AnthropicAPIKey = "anthropic-key"
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "OPENAI_API_KEY is required when AI_PROVIDER is 'openai'")
+	})
+
+	t.Run("requires anthropic key when provider is anthropic", func(t *testing.T) {
+		cfg := *base
+		cfg.AIProvider = "anthropic"
+		cfg.OpenAIAPIKey = "openai-key"
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "ANTHROPIC_API_KEY is required when AI_PROVIDER is 'anthropic'")
+	})
+
+	t.Run("rejects unsupported provider", func(t *testing.T) {
+		cfg := *base
+		cfg.AIProvider = "unsupported"
+		cfg.OpenAIAPIKey = "openai-key"
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "AI_PROVIDER must be 'openai' or 'anthropic'")
+	})
 }
 
 func TestConnectionString(t *testing.T) {
@@ -336,6 +420,10 @@ func TestMustLoad_Success(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Unsetenv("DB_PASSWORD")
 
+	err = os.Setenv("OPENAI_API_KEY", "test-openai-key")
+	require.NoError(t, err)
+	defer os.Unsetenv("OPENAI_API_KEY")
+
 	// This should not panic
 	config := MustLoad()
 	assert.NotNil(t, config)
@@ -367,6 +455,7 @@ DB_NAME=filedb
 DB_USER=fileuser
 DB_PASSWORD=filepass
 API_PORT=9000
+OPENAI_API_KEY=file-openai-key
 `
 	tmpFile, err := os.CreateTemp("", "test*.env")
 	require.NoError(t, err)
@@ -401,6 +490,7 @@ func TestGetDefaults(t *testing.T) {
 	assert.Equal(t, 8080, config.APIPort)
 
 	// Validate that defaults are valid
+	config.OpenAIAPIKey = "test-openai-key"
 	err := config.Validate()
 	assert.NoError(t, err)
 }

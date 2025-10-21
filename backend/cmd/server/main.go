@@ -41,10 +41,31 @@ func main() {
 	youtubeService := services.NewYouTubeService()
 	videoRepo := db.NewVideoRepository(database)
 	transcriptRepo := db.NewTranscriptRepository(database)
+	summaryRepo := db.NewAISummaryRepository(database)
+	extractionRepo := db.NewAIExtractionRepository(database)
+
+	var aiProvider services.AIProvider
+	switch cfg.AIProvider {
+	case "openai":
+		openAIProvider, providerErr := services.NewOpenAIProvider(cfg.OpenAIAPIKey, cfg.AIModel, cfg.AIMaxTokens, cfg.AITemperature)
+		if providerErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to configure OpenAI provider: %v\n", providerErr)
+			os.Exit(1)
+		}
+		aiProvider = openAIProvider
+	case "anthropic":
+		fmt.Fprintln(os.Stderr, "Anthropic provider is not yet implemented")
+		os.Exit(1)
+	default:
+		fmt.Fprintf(os.Stderr, "Unsupported AI provider: %s\n", cfg.AIProvider)
+		os.Exit(1)
+	}
+
+	aiSvc := services.NewAIService(aiProvider, cfg.AIModel)
 
 	// Create API server
 	fmt.Println("🏗️  Creating API server...")
-	server, err := api.NewServer(cfg, database, youtubeService, videoRepo, transcriptRepo)
+	server, err := api.NewServer(cfg, database, youtubeService, videoRepo, transcriptRepo, aiSvc, summaryRepo, extractionRepo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create API server: %v\n", err)
 		os.Exit(1)
