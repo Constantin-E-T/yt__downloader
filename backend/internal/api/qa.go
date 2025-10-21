@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -96,6 +98,8 @@ func (s *Server) handleTranscriptQA(w http.ResponseWriter, r *http.Request) {
 	// Call AI service for answer
 	aiAnswer, err := s.aiService.Answer(ctx, transcriptText, question)
 	if err != nil {
+		log.Printf("ERROR [%s %s] AI Q&A failed (question=%s, transcript=%s): %v",
+			r.Method, r.URL.Path, question, transcriptID, err)
 		handleAIAnswerError(w, err)
 		return
 	}
@@ -109,14 +113,25 @@ func (s *Server) handleTranscriptQA(w http.ResponseWriter, r *http.Request) {
 func handleAIAnswerError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, services.ErrAIRateLimited):
-		writeStructuredError(w, http.StatusTooManyRequests, err, "OpenAI rate limit reached. Please try again later.")
+		writeStructuredError(w, http.StatusTooManyRequests, err, "AI rate limit reached. Please wait a moment and try again.")
 	case errors.Is(err, services.ErrAIQuotaExceeded):
-		writeStructuredError(w, http.StatusTooManyRequests, err, "AI quota exceeded. Please try again later.")
-	case errors.Is(err, services.ErrAIServiceUnavailable),
-		errors.Is(err, services.ErrAIProviderNotConfigured):
-		writeStructuredError(w, http.StatusServiceUnavailable, err, "OpenAI service unavailable")
+		writeStructuredError(w, http.StatusPaymentRequired, err, "AI quota exceeded. Please contact the administrator.")
+	case errors.Is(err, services.ErrAIServiceUnavailable):
+		writeStructuredError(w, http.StatusServiceUnavailable, err, "AI service is temporarily unavailable. Please try again in a few moments.")
+	case errors.Is(err, services.ErrAIProviderNotConfigured):
+		writeStructuredError(w, http.StatusServiceUnavailable, err, "AI service is not configured. Please contact the administrator.")
+	case errors.Is(err, context.DeadlineExceeded):
+		writeStructuredError(w, http.StatusGatewayTimeout, err, "AI request timed out (>60s). Try with a shorter question or try again later.")
+	case errors.Is(err, context.Canceled):
+		writeStructuredError(w, http.StatusRequestTimeout, err, "Request was canceled.")
 	default:
-		writeStructuredError(w, http.StatusInternalServerError, err, "Failed to generate answer")
+		// Check if it's a JSON parsing error
+		if strings.Contains(err.Error(), "parse") || strings.Contains(err.Error(), "unmarshal") || strings.Contains(err.Error(), "json") {
+			writeStructuredError(w, http.StatusInternalServerError, err, "AI response format error. The AI returned an invalid response. Please try again.")
+		} else {
+			// Generic error with hint about the actual error
+			writeStructuredError(w, http.StatusInternalServerError, err, fmt.Sprintf("Failed to answer question: %v", err))
+		}
 	}
 }
 

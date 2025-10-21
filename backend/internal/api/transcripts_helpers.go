@@ -92,6 +92,18 @@ func convertTranscriptLines(lines []services.TranscriptLine) (db.TranscriptSegme
 	return dbSegments, apiLines
 }
 
+func convertSegmentsToLines(segments db.TranscriptSegments) []TranscriptLine {
+	lines := make([]TranscriptLine, 0, len(segments))
+	for _, segment := range segments {
+		lines = append(lines, TranscriptLine{
+			Start:    segment.StartMs,
+			Duration: segment.DurationMs,
+			Text:     strings.TrimSpace(segment.Text),
+		})
+	}
+	return lines
+}
+
 func isDatabaseUnavailableError(err error) bool {
 	if err == nil {
 		return false

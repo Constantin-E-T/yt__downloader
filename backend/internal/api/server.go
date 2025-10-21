@@ -25,6 +25,7 @@ type youtubeService interface {
 
 type videoRepository interface {
 	SaveVideo(ctx context.Context, video *db.Video) error
+	GetVideoByID(ctx context.Context, id string) (*db.Video, error)
 }
 
 type transcriptRepository interface {
@@ -148,6 +149,7 @@ func (s *Server) setupRoutes() {
 
 		r.Route("/v1", func(r chi.Router) {
 			r.Get("/health", s.handleHealth)
+			r.Get("/transcripts/{id}", s.handleGetTranscript)
 			r.Post("/transcripts/fetch", s.handleFetchTranscript)
 			r.Route("/transcripts/{id}/summarize", func(r chi.Router) {
 				r.Post("/", s.handleSummarizeTranscript)

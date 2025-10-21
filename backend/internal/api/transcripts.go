@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/yourusername/yt-transcript-downloader/internal/db"
 	"github.com/yourusername/yt-transcript-downloader/internal/services"
 )
@@ -148,6 +150,59 @@ func (s *Server) handleFetchTranscript(w http.ResponseWriter, r *http.Request) {
 		Title:        metadata.Title,
 		Language:     lang,
 		Transcript:   apiLines,
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// handleGetTranscript handles GET /api/v1/transcripts/{id} requests by returning cached transcript content.
+func (s *Server) handleGetTranscript(w http.ResponseWriter, r *http.Request) {
+	transcriptID := strings.TrimSpace(chi.URLParam(r, "id"))
+	if transcriptID == "" {
+		writeStructuredError(w, http.StatusBadRequest, nil, "Transcript ID is required")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	transcript, err := s.transcriptRepo.GetTranscriptByID(ctx, transcriptID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			writeStructuredError(w, http.StatusNotFound, err, "Transcript not found")
+			return
+		}
+		if isDatabaseUnavailableError(err) {
+			writeStructuredError(w, http.StatusServiceUnavailable, err, "Database unavailable. Please try again later.")
+			return
+		}
+		log.Printf("ERROR [%s %s] get transcript: %v", r.Method, r.URL.Path, err)
+		writeStructuredError(w, http.StatusInternalServerError, err, "Failed to fetch transcript")
+		return
+	}
+
+	video, err := s.videoRepository.GetVideoByID(ctx, transcript.VideoID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			writeStructuredError(w, http.StatusNotFound, err, "Video metadata not found for transcript")
+			return
+		}
+		if isDatabaseUnavailableError(err) {
+			writeStructuredError(w, http.StatusServiceUnavailable, err, "Database unavailable. Please try again later.")
+			return
+		}
+		log.Printf("ERROR [%s %s] get video: %v", r.Method, r.URL.Path, err)
+		writeStructuredError(w, http.StatusInternalServerError, err, "Failed to fetch video metadata")
+		return
+	}
+
+	lines := convertSegmentsToLines(transcript.Content)
+	resp := TranscriptResponse{
+		TranscriptID: transcript.ID,
+		VideoID:      video.YouTubeID,
+		Title:        video.Title,
+		Language:     transcript.Language,
+		Transcript:   lines,
 	}
 
 	writeJSON(w, http.StatusOK, resp)

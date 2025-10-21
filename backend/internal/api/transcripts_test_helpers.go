@@ -53,6 +53,18 @@ func (r *recordingVideoRepo) SaveVideo(_ context.Context, video *db.Video) error
 	return nil
 }
 
+func (r *recordingVideoRepo) GetVideoByID(_ context.Context, id string) (*db.Video, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	for _, v := range r.saved {
+		if v.ID == id {
+			return v, nil
+		}
+	}
+	return nil, db.ErrNotFound
+}
+
 type recordingTranscriptRepo struct {
 	saved []*db.Transcript
 	err   error

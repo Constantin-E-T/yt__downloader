@@ -75,6 +75,16 @@ func (noopVideoRepo) SaveVideo(context.Context, *db.Video) error {
 	return nil
 }
 
+func (noopVideoRepo) GetVideoByID(context.Context, string) (*db.Video, error) {
+	return &db.Video{
+		ID:        "video-123",
+		YouTubeID: "test-video-id",
+		Title:     "Test Video",
+		Channel:   "Test Channel",
+		Duration:  300,
+	}, nil
+}
+
 type noopTranscriptRepo struct{}
 
 func (noopTranscriptRepo) SaveTranscript(context.Context, *db.Transcript) error {
