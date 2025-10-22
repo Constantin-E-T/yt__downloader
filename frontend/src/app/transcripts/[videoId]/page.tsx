@@ -23,10 +23,7 @@ import {
   type ExtractionType,
 } from "@/lib/api/extractions";
 import { requestQA, type QAResponse } from "@/lib/api/qa";
-import { TranscriptMeta, TranscriptTable } from "@/components/transcript-table";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { ExtractionPanel } from "@/components/extraction-panel";
-import { QASection } from "@/components/qa-section";
+import { TranscriptMeta } from "@/components/transcript-table";
 import {
   YouTubePlayer,
   type YouTubePlayerRef,
@@ -45,70 +42,31 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const SUMMARY_OPTIONS = [
-  {
-    value: "brief",
-    label: "Brief overview",
-    description: "High-level recap in a few sentences.",
-  },
-  {
-    value: "detailed",
-    label: "Detailed synopsis",
-    description: "Narrative summary covering major sections.",
-  },
-  {
-    value: "key_points",
-    label: "Key takeaways",
-    description: "Bullet points for quick scanning.",
-  },
-] as const;
-
-type SummaryType = (typeof SUMMARY_OPTIONS)[number]["value"];
+import { SummaryPanel } from "./components/summary-panel";
+import { TranscriptTab } from "./components/transcript-tab";
+import { AIAnalysisTab } from "./components/ai-analysis-tab";
+import { SearchTab } from "./components/search-tab";
+import { ExportTab } from "./components/export-tab";
+import {
+  SUMMARY_OPTIONS,
+  EXTRACTION_OPTIONS,
+  extractionLoadingText,
+} from "./constants";
+import type { SummaryType, AITab } from "./types";
 
 const SUMMARY_VALUES = new Set<SummaryType>(
   SUMMARY_OPTIONS.map((option) => option.value)
 );
 
-const EXTRACTION_OPTIONS: Array<{
-  value: ExtractionType;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "code",
-    label: "Extract Code",
-    description: "Find relevant code snippets with context.",
-  },
-  {
-    value: "quotes",
-    label: "Extract Quotes",
-    description: "Highlight impactful quotes and speakers.",
-  },
-  {
-    value: "action_items",
-    label: "Extract Action Items",
-    description: "Summarise next steps and responsibilities.",
-  },
-];
-
 const EXTRACTION_VALUES = new Set<ExtractionType>(
   EXTRACTION_OPTIONS.map((option) => option.value)
 );
-
-const extractionLoadingText: Record<ExtractionType, string> = {
-  code: "Extracting code snippets...",
-  quotes: "Extracting key quotes...",
-  action_items: "Extracting action items...",
-};
 
 const TAB_OPTIONS = ["transcript", "ai", "search", "export"] as const;
 type TabKey = (typeof TAB_OPTIONS)[number];
 const TAB_VALUES = new Set<TabKey>(TAB_OPTIONS);
 
-const AI_TAB_OPTIONS = ["summary", "extract", "qa"] as const;
-type AITab = (typeof AI_TAB_OPTIONS)[number];
-const AI_TAB_VALUES = new Set<AITab>(AI_TAB_OPTIONS);
+const AI_TAB_VALUES = new Set<AITab>(["summary", "extract", "qa"]);
 
 function normaliseParam(
   value: string | string[] | null | undefined
@@ -666,7 +624,7 @@ export default function TranscriptPage() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row">
-      <aside className="w-full lg:w-[400px] lg:flex-shrink-0">
+      <aside className="w-full lg:w-[400px] lg:shrink-0">
         <div className="space-y-4 lg:sticky lg:top-6">
           <Card>
             <CardHeader className="pb-2">
@@ -862,32 +820,17 @@ export default function TranscriptPage() {
             </TabsList>
 
             <TabsContent value="transcript" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Full Transcript</CardTitle>
-                  <CardDescription>
-                    Click any timestamp to jump to that moment in the video.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[600px]">
-                    <div className="p-4">
-                      <TranscriptTable
-                        transcript={transcriptData.transcript}
-                        currentTime={currentVideoTime}
-                        onSeek={handleSeek}
-                        disableInternalScroll
-                      />
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+              <TranscriptTab
+                transcript={transcriptData.transcript}
+                currentTime={currentVideoTime}
+                onSeek={handleSeek}
+              />
             </TabsContent>
 
             <TabsContent value="ai" className="mt-6">
-              <Tabs
-                value={activeAITab}
-                onValueChange={(value) => {
+              <AIAnalysisTab
+                activeAITab={activeAITab}
+                onAITabChange={(value) => {
                   if (isAITabKey(value)) {
                     setActiveAITab(value);
                     updateSearchParams((params) => {
@@ -895,350 +838,47 @@ export default function TranscriptPage() {
                     });
                   }
                 }}
-              >
-                <TabsList className="flex flex-wrap gap-2">
-                  <TabsTrigger value="summary">Summarize</TabsTrigger>
-                  <TabsTrigger value="extract">Extract</TabsTrigger>
-                  <TabsTrigger value="qa">Q&amp;A</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="summary" className="mt-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>AI Summary</CardTitle>
-                      <CardDescription>
-                        Generate cached summaries via the backend AI service.
-                        Repeat requests reuse cached results for faster
-                        responses.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-3 md:grid-cols-3">
-                        {SUMMARY_OPTIONS.map((option) => {
-                          const isActive = summaryType === option.value;
-                          return (
-                            <Button
-                              key={option.value}
-                              type="button"
-                              variant="outline"
-                              onClick={() => handleSelectSummary(option.value)}
-                              className={cn(
-                                "h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left overflow-hidden",
-                                isActive
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "bg-background text-foreground hover:border-primary/60 hover:bg-muted/40"
-                              )}
-                            >
-                              <span className="text-sm font-semibold capitalize truncate w-full">
-                                {option.label}
-                              </span>
-                              <span className="text-xs text-muted-foreground line-clamp-2 w-full">
-                                {option.description}
-                              </span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-
-                      {summaryType ? (
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <span className="text-sm text-muted-foreground">
-                            {summaryLoading
-                              ? "Generating summary..."
-                              : "Summary ready. You can clear the selection to reset."}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={handleClearSummary}
-                            disabled={summaryLoading}
-                          >
-                            Clear summary
-                          </Button>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Select a summary type above to generate an AI summary.
-                        </p>
-                      )}
-
-                      {summaryError ? (
-                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                          {summaryError}
-                        </div>
-                      ) : null}
-
-                      {summaryLoading ? (
-                        <LoadingSpinner text="Generating summary..." />
-                      ) : null}
-
-                      {!summaryLoading && summaryType && summaryData ? (
-                        <SummaryPanel summary={summaryData} />
-                      ) : null}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="extract" className="mt-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Content Extraction</CardTitle>
-                      <CardDescription>
-                        Identify code snippets, key quotes, or actionable next
-                        steps sourced from the transcript.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-3 md:grid-cols-3">
-                        {EXTRACTION_OPTIONS.map((option) => {
-                          const isActive = extractionParam === option.value;
-                          return (
-                            <Button
-                              key={option.value}
-                              type="button"
-                              variant="outline"
-                              onClick={() =>
-                                handleSelectExtraction(option.value)
-                              }
-                              className={cn(
-                                "h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left overflow-hidden",
-                                isActive
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "bg-background text-foreground hover:border-primary/60 hover:bg-muted/40"
-                              )}
-                            >
-                              <span className="text-sm font-semibold capitalize truncate w-full">
-                                {option.label}
-                              </span>
-                              <span className="text-xs text-muted-foreground line-clamp-2 w-full">
-                                {option.description}
-                              </span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-
-                      {extractionParam ? (
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <span className="text-sm text-muted-foreground">
-                            {extractionLoadingType
-                              ? extractionLoadingText[extractionLoadingType]
-                              : "Extraction ready. Clear the selection to choose another type."}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={handleClearExtraction}
-                            disabled={Boolean(extractionLoadingType)}
-                          >
-                            Clear extraction
-                          </Button>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Choose an extraction type above to analyse the
-                          transcript.
-                        </p>
-                      )}
-
-                      {extractionError ? (
-                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                          {extractionError}
-                        </div>
-                      ) : null}
-
-                      {extractionLoadingType ? (
-                        <LoadingSpinner
-                          text={extractionLoadingText[extractionLoadingType]}
-                        />
-                      ) : null}
-
-                      {!extractionLoadingType && activeExtraction ? (
-                        <ExtractionPanel data={activeExtraction} />
-                      ) : null}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="qa" className="mt-4">
-                  <QASection
-                    transcriptId={transcriptData.transcript_id}
-                    qaHistory={qaHistory}
-                    onAskQuestion={handleAskQuestion}
-                    onClearHistory={handleClearQAHistory}
-                    loading={qaLoading}
-                    bootstrapping={qaBootstrapping}
-                    error={qaError}
-                  />
-                </TabsContent>
-              </Tabs>
+                summaryType={summaryType}
+                summaryData={summaryData}
+                summaryLoading={summaryLoading}
+                summaryError={summaryError}
+                onSelectSummary={handleSelectSummary}
+                onClearSummary={handleClearSummary}
+                extractionParam={extractionParam}
+                extractionLoadingType={extractionLoadingType}
+                extractionError={extractionError}
+                activeExtraction={activeExtraction}
+                onSelectExtraction={handleSelectExtraction}
+                onClearExtraction={handleClearExtraction}
+                transcriptId={String(transcriptData.transcript_id)}
+                qaHistory={qaHistory}
+                onAskQuestion={handleAskQuestion}
+                onClearQAHistory={handleClearQAHistory}
+                qaLoading={qaLoading}
+                qaBootstrapping={qaBootstrapping}
+                qaError={qaError}
+              />
             </TabsContent>
 
             <TabsContent value="search" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Search Transcript</CardTitle>
-                  <CardDescription>
-                    Filter transcript lines by keyword and jump straight to the
-                    moments that matter.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <form
-                    className="flex flex-col gap-3 sm:flex-row sm:items-end"
-                    onSubmit={handleSearchSubmit}
-                  >
-                    <div className="flex-1">
-                      <label
-                        htmlFor="query"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        Search query
-                      </label>
-                      <input
-                        id="query"
-                        name="query"
-                        type="text"
-                        value={searchValue}
-                        onChange={(event) => setSearchValue(event.target.value)}
-                        placeholder="Keyword or phrase"
-                        className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button type="submit" className="flex-1 sm:flex-none">
-                        Apply search
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleClearSearch}
-                        className="flex-1 sm:flex-none"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  </form>
-
-                  {queryParam ? (
-                    <p className="text-sm text-muted-foreground">
-                      Showing results containing{" "}
-                      <span className="font-medium text-foreground">
-                        &ldquo;{queryParam}&rdquo;
-                      </span>
-                      .
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Use the search field above to filter transcript lines and
-                      highlight matching phrases.
-                    </p>
-                  )}
-
-                  <ScrollArea className="h-[520px]">
-                    <div className="pr-4">
-                      <TranscriptTable
-                        transcript={transcriptData.transcript}
-                        query={queryParam}
-                        currentTime={currentVideoTime}
-                        onSeek={handleSeek}
-                        disableInternalScroll
-                      />
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+              <SearchTab
+                transcript={transcriptData.transcript}
+                currentTime={currentVideoTime}
+                onSeek={handleSeek}
+                searchValue={searchValue}
+                onSearchValueChange={setSearchValue}
+                queryParam={queryParam}
+                onSearchSubmit={handleSearchSubmit}
+                onClearSearch={handleClearSearch}
+              />
             </TabsContent>
 
             <TabsContent value="export" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Export Transcript</CardTitle>
-                  <CardDescription>
-                    Save structured content for use in other tools.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Export options coming soon. Let us know which formats
-                    you&apos;d like to see first!
-                  </p>
-                </CardContent>
-              </Card>
+              <ExportTab />
             </TabsContent>
           </Tabs>
         ) : null}
       </main>
-    </div>
-  );
-}
-
-function SummaryPanel({ summary }: { summary: SummaryResponse }) {
-  if (!summary) return null;
-
-  const content = summary.content;
-
-  return (
-    <div className="space-y-4 text-sm text-foreground">
-      {content.text ? (
-        <p className="text-base leading-relaxed text-foreground/90">
-          {content.text}
-        </p>
-      ) : null}
-
-      {content.key_points && content.key_points.length > 0 ? (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Key points
-          </h3>
-          <ul className="list-disc space-y-1 pl-5 text-foreground/90">
-            {content.key_points.map((point, index) => (
-              <li key={`${point}-${index}`}>{point}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {content.sections && content.sections.length > 0 ? (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Sections
-          </h3>
-          <div className="space-y-3">
-            {content.sections.map((section, index) => (
-              <div
-                key={`${section.title}-${index}`}
-                className="rounded-lg border border-border bg-muted/20 p-4"
-              >
-                <p className="text-sm font-semibold text-foreground/90">
-                  {section.title || `Section ${index + 1}`}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {section.content}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
-        <span>
-          Model:{" "}
-          <span className="font-medium text-foreground/80">
-            {summary.model}
-          </span>
-        </span>
-        <span className="text-foreground/30">•</span>
-        <span>
-          Tokens used:{" "}
-          <span className="font-medium text-foreground/80">
-            {summary.tokens_used.toLocaleString()}
-          </span>
-        </span>
-        <span className="text-foreground/30">•</span>
-        <span>{new Date(summary.created_at).toLocaleString()}</span>
-      </div>
     </div>
   );
 }
