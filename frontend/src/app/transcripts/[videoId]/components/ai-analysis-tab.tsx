@@ -78,181 +78,258 @@ export function AIAnalysisTab({
   qaError,
 }: AIAnalysisTabProps) {
   return (
-    <Tabs
-      value={activeAITab}
-      onValueChange={(value) => onAITabChange(value as AITab)}
-    >
-      <TabsList className="flex flex-wrap gap-2">
-        <TabsTrigger value="summary">Summarize</TabsTrigger>
-        <TabsTrigger value="extract">Extract</TabsTrigger>
-        <TabsTrigger value="qa">Q&amp;A</TabsTrigger>
-      </TabsList>
+    <div className="flex h-full flex-col">
+      <Tabs
+        value={activeAITab}
+        onValueChange={(value) => onAITabChange(value as AITab)}
+        className="flex h-full flex-col"
+      >
+        {/* Sticky Secondary Tabs with Shadow */}
+        <div className="sticky top-0 z-10 -mx-1 shrink-0 border-b bg-background/95 px-1 pb-4 pt-1 backdrop-blur supports-backdrop-filter:bg-background/80">
+          <TabsList className="grid w-full grid-cols-3 gap-2">
+            <TabsTrigger
+              value="summary"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <span className="hidden sm:inline">✨ Summarize</span>
+              <span className="sm:hidden">✨</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="extract"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <span className="hidden sm:inline">🔍 Extract</span>
+              <span className="sm:hidden">🔍</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="qa"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <span className="hidden sm:inline">💬 Q&amp;A</span>
+              <span className="sm:hidden">💬</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      <TabsContent value="summary" className="mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Summary</CardTitle>
-            <CardDescription>
-              Generate cached summaries via the backend AI service. Repeat
-              requests reuse cached results for faster responses.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              {SUMMARY_OPTIONS.map((option) => {
-                const isActive = summaryType === option.value;
-                return (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    variant="outline"
-                    onClick={() => onSelectSummary(option.value)}
-                    className={cn(
-                      "h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left overflow-hidden",
-                      isActive
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "bg-background text-foreground hover:border-primary/60 hover:bg-muted/40"
-                    )}
-                  >
-                    <span className="text-sm font-semibold capitalize truncate w-full">
-                      {option.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground line-clamp-2 w-full">
-                      {option.description}
-                    </span>
-                  </Button>
-                );
-              })}
-            </div>
+        {/* Scrollable Content with Padding */}
+        <div className="min-h-0 flex-1 overflow-y-auto pt-6">
+          <TabsContent
+            value="summary"
+            className="m-0 focus-visible:outline-none"
+          >
+            <Card className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <CardTitle>AI Summary</CardTitle>
+                <CardDescription>
+                  Generate cached summaries via the backend AI service. Repeat
+                  requests reuse cached results for faster responses.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  {SUMMARY_OPTIONS.map((option) => {
+                    const isActive = summaryType === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onSelectSummary(option.value)}
+                        className={cn(
+                          "relative h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all",
+                          "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                          isActive
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "border-border bg-card hover:border-primary/60 hover:bg-accent/50"
+                        )}
+                      >
+                        {/* Radio indicator */}
+                        <div className="mb-2 flex items-center justify-between w-full">
+                          <div
+                            className={cn(
+                              "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all",
+                              isActive
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground/30"
+                            )}
+                          >
+                            {isActive && (
+                              <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        <span className={cn(
+                          "text-sm font-semibold capitalize truncate w-full",
+                          isActive ? "text-primary" : "text-foreground"
+                        )}>
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground line-clamp-2 w-full">
+                          {option.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-            {summaryType ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm text-muted-foreground">
-                  {summaryLoading
-                    ? "Generating summary..."
-                    : "Summary ready. You can clear the selection to reset."}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={onClearSummary}
-                  disabled={summaryLoading}
-                >
-                  Clear summary
-                </Button>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Select a summary type above to generate an AI summary.
-              </p>
-            )}
+                {summaryType ? (
+                  <div className="rounded-md bg-muted/50 px-3 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm text-muted-foreground">
+                        {summaryLoading
+                          ? "Generating summary..."
+                          : "Summary ready. Click another option to switch or clear to reset."}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClearSummary}
+                        disabled={summaryLoading}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Choose one summary type to generate an AI summary.
+                  </p>
+                )}
 
-            {summaryError ? (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {summaryError}
-              </div>
-            ) : null}
+                {summaryError ? (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {summaryError}
+                  </div>
+                ) : null}
 
-            {summaryLoading ? (
-              <LoadingSpinner text="Generating summary..." />
-            ) : null}
+                {summaryLoading ? (
+                  <LoadingSpinner text="Generating summary..." />
+                ) : null}
 
-            {!summaryLoading && summaryType && summaryData ? (
-              <SummaryPanel summary={summaryData} />
-            ) : null}
-          </CardContent>
-        </Card>
-      </TabsContent>
+                {!summaryLoading && summaryType && summaryData ? (
+                  <SummaryPanel summary={summaryData} />
+                ) : null}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      <TabsContent value="extract" className="mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Content Extraction</CardTitle>
-            <CardDescription>
-              Identify code snippets, key quotes, or actionable next steps
-              sourced from the transcript.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              {EXTRACTION_OPTIONS.map((option) => {
-                const isActive = extractionParam === option.value;
-                return (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    variant="outline"
-                    onClick={() => onSelectExtraction(option.value)}
-                    className={cn(
-                      "h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left overflow-hidden",
-                      isActive
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "bg-background text-foreground hover:border-primary/60 hover:bg-muted/40"
-                    )}
-                  >
-                    <span className="text-sm font-semibold capitalize truncate w-full">
-                      {option.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground line-clamp-2 w-full">
-                      {option.description}
-                    </span>
-                  </Button>
-                );
-              })}
-            </div>
+          <TabsContent
+            value="extract"
+            className="m-0 focus-visible:outline-none"
+          >
+            <Card className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <CardTitle>Content Extraction</CardTitle>
+                <CardDescription>
+                  Identify code snippets, key quotes, or actionable next steps
+                  sourced from the transcript.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  {EXTRACTION_OPTIONS.map((option) => {
+                    const isActive = extractionParam === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onSelectExtraction(option.value)}
+                        className={cn(
+                          "relative h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all",
+                          "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                          isActive
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "border-border bg-card hover:border-primary/60 hover:bg-accent/50"
+                        )}
+                      >
+                        {/* Radio indicator */}
+                        <div className="mb-2 flex items-center justify-between w-full">
+                          <div
+                            className={cn(
+                              "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all",
+                              isActive
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground/30"
+                            )}
+                          >
+                            {isActive && (
+                              <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        <span className={cn(
+                          "text-sm font-semibold capitalize truncate w-full",
+                          isActive ? "text-primary" : "text-foreground"
+                        )}>
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground line-clamp-2 w-full">
+                          {option.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-            {extractionParam ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm text-muted-foreground">
-                  {extractionLoadingType
-                    ? extractionLoadingText[extractionLoadingType]
-                    : "Extraction ready. Clear the selection to choose another type."}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={onClearExtraction}
-                  disabled={Boolean(extractionLoadingType)}
-                >
-                  Clear extraction
-                </Button>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Choose an extraction type above to analyse the transcript.
-              </p>
-            )}
+                {extractionParam ? (
+                  <div className="rounded-md bg-muted/50 px-3 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm text-muted-foreground">
+                        {extractionLoadingType
+                          ? extractionLoadingText[extractionLoadingType]
+                          : "Extraction ready. Click another option to switch or clear to reset."}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClearExtraction}
+                        disabled={Boolean(extractionLoadingType)}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Choose one extraction type to analyse the transcript.
+                  </p>
+                )}
 
-            {extractionError ? (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {extractionError}
-              </div>
-            ) : null}
+                {extractionError ? (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {extractionError}
+                  </div>
+                ) : null}
 
-            {extractionLoadingType ? (
-              <LoadingSpinner
-                text={extractionLoadingText[extractionLoadingType]}
-              />
-            ) : null}
+                {extractionLoadingType ? (
+                  <LoadingSpinner
+                    text={extractionLoadingText[extractionLoadingType]}
+                  />
+                ) : null}
 
-            {!extractionLoadingType && activeExtraction ? (
-              <ExtractionPanel data={activeExtraction} />
-            ) : null}
-          </CardContent>
-        </Card>
-      </TabsContent>
+                {!extractionLoadingType && activeExtraction ? (
+                  <ExtractionPanel data={activeExtraction} />
+                ) : null}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      <TabsContent value="qa" className="mt-4">
-        <QASection
-          transcriptId={transcriptId}
-          qaHistory={qaHistory}
-          onAskQuestion={onAskQuestion}
-          onClearHistory={onClearQAHistory}
-          loading={qaLoading}
-          bootstrapping={qaBootstrapping}
-          error={qaError}
-        />
-      </TabsContent>
-    </Tabs>
+          <TabsContent value="qa" className="m-0 focus-visible:outline-none">
+            <QASection
+              transcriptId={transcriptId}
+              qaHistory={qaHistory}
+              onAskQuestion={onAskQuestion}
+              onClearHistory={onClearQAHistory}
+              loading={qaLoading}
+              bootstrapping={qaBootstrapping}
+              error={qaError}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
   );
 }
