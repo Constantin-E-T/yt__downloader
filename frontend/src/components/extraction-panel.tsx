@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useId, useState } from "react";
 import clsx from "clsx";
@@ -104,24 +104,28 @@ function QuoteCard({ quote }: { quote: Quote }) {
 function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
   const checkboxId = useId();
   const [isChecked, setIsChecked] = useState(false);
-  
+
   const badgeClass = clsx(
     "text-xs px-2 py-0.5 rounded capitalize",
     item.priority === "high" && "bg-red-500/20 text-red-700 dark:text-red-400",
-    item.priority === "medium" && "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400",
-    item.priority === "low" && "bg-green-500/20 text-green-700 dark:text-green-400"
+    item.priority === "medium" &&
+      "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400",
+    item.priority === "low" &&
+      "bg-green-500/20 text-green-700 dark:text-green-400"
   );
 
   // Smart detection: Is this actually actionable or just informational?
   const isActionable = isTaskActionable(item.task);
-  
+
   return (
-    <div className={clsx(
-      "group relative space-y-3 rounded-lg border border-border p-4 transition-all",
-      isActionable && "bg-card hover:shadow-md",
-      !isActionable && "bg-muted/20",
-      isChecked && isActionable && "opacity-60"
-    )}>
+    <div
+      className={clsx(
+        "group relative space-y-3 rounded-lg border border-border p-4 transition-all",
+        isActionable && "bg-card hover:shadow-md",
+        !isActionable && "bg-muted/20",
+        isChecked && isActionable && "opacity-60"
+      )}
+    >
       <div className="flex items-center gap-3">
         {isActionable ? (
           // Checkbox for actionable tasks
@@ -135,7 +139,7 @@ function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
           />
         ) : (
           // Informational indicator for non-actionable items
-          <div 
+          <div
             className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary"
             title="Information point"
           >
@@ -144,28 +148,34 @@ function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
         )}
         <span className={badgeClass}>{item.priority}</span>
       </div>
-      
-      <label 
+
+      <label
         htmlFor={isActionable ? checkboxId : undefined}
         className={clsx(
           "block text-sm font-medium transition-all",
           isActionable && "cursor-pointer",
-          isChecked && isActionable ? "text-muted-foreground line-through" : "text-foreground"
+          isChecked && isActionable
+            ? "text-muted-foreground line-through"
+            : "text-foreground"
         )}
       >
         {item.task}
       </label>
-      
+
       {item.category ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="capitalize">📁 {item.category}</span>
         </div>
       ) : null}
-      
-      <p className={clsx(
-        "text-sm leading-relaxed",
-        isChecked && isActionable ? "text-muted-foreground/60" : "text-muted-foreground"
-      )}>
+
+      <p
+        className={clsx(
+          "text-sm leading-relaxed",
+          isChecked && isActionable
+            ? "text-muted-foreground/60"
+            : "text-muted-foreground"
+        )}
+      >
         {item.context}
       </p>
     </div>
@@ -175,35 +185,71 @@ function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
 // Smart function to detect if a task is actionable or informational
 function isTaskActionable(task: string): boolean {
   const taskLower = task.toLowerCase();
-  
+
   // Action verbs that indicate a task to do
   const actionVerbs = [
-    'install', 'setup', 'configure', 'create', 'build', 'learn', 'practice',
-    'implement', 'write', 'code', 'develop', 'deploy', 'test', 'run',
-    'clone', 'fork', 'commit', 'push', 'pull', 'download', 'upgrade',
-    'read', 'study', 'review', 'check', 'verify', 'validate', 'ensure',
-    'set up', 'sign up', 'register', 'subscribe', 'follow', 'watch',
-    'try', 'experiment', 'explore', 'research', 'investigate'
+    "install",
+    "setup",
+    "configure",
+    "create",
+    "build",
+    "learn",
+    "practice",
+    "implement",
+    "write",
+    "code",
+    "develop",
+    "deploy",
+    "test",
+    "run",
+    "clone",
+    "fork",
+    "commit",
+    "push",
+    "pull",
+    "download",
+    "upgrade",
+    "read",
+    "study",
+    "review",
+    "check",
+    "verify",
+    "validate",
+    "ensure",
+    "set up",
+    "sign up",
+    "register",
+    "subscribe",
+    "follow",
+    "watch",
+    "try",
+    "experiment",
+    "explore",
+    "research",
+    "investigate",
   ];
-  
+
   // Check if task starts with or contains action verbs
-  const hasActionVerb = actionVerbs.some(verb => 
-    taskLower.startsWith(verb) || 
-    taskLower.includes(` ${verb} `) ||
-    taskLower.includes(`${verb} `)
+  const hasActionVerb = actionVerbs.some(
+    (verb) =>
+      taskLower.startsWith(verb) ||
+      taskLower.includes(` ${verb} `) ||
+      taskLower.includes(`${verb} `)
   );
-  
+
   // Informational patterns (these are NOT actionable)
   const informationalPatterns = [
     /^(understanding|knowing|awareness|importance)/i,
     /^(the |a |an )/i, // Starts with article (usually informational)
     /is important/i,
     /should be/i,
-    /need to know/i
+    /need to know/i,
   ];
-  
-  const isInformational = informationalPatterns.some(pattern => pattern.test(task));
-  
+
+  const isInformational = informationalPatterns.some((pattern) =>
+    pattern.test(task)
+  );
+
   // If it has action verbs and is not informational, it's actionable
   return hasActionVerb && !isInformational;
 }
@@ -221,36 +267,40 @@ function renderExtractionItems(
   }
 
   switch (extractionType) {
-  case "code":
-    return (items as CodeSnippet[]).map((snippet, index) => (
-      <CodeSnippetCard
-        key={`${snippet.language}-${index}`}
-        snippet={snippet}
-      />
-    ));
-  case "quotes":
-    return (items as Quote[]).map((quote, index) => (
-      <QuoteCard key={`${quote.quote}-${index}`} quote={quote} />
-    ));
-  case "action_items":
-    return (items as ActionItem[]).map((item, index) => (
-      <ActionItemCard key={`${item.task}-${index}`} item={item} index={index} />
-    ));
-  default:
-    return null;
+    case "code":
+      return (items as CodeSnippet[]).map((snippet, index) => (
+        <CodeSnippetCard
+          key={`${snippet.language}-${index}`}
+          snippet={snippet}
+        />
+      ));
+    case "quotes":
+      return (items as Quote[]).map((quote, index) => (
+        <QuoteCard key={`${quote.quote}-${index}`} quote={quote} />
+      ));
+    case "action_items":
+      return (items as ActionItem[]).map((item, index) => (
+        <ActionItemCard
+          key={`${item.task}-${index}`}
+          item={item}
+          index={index}
+        />
+      ));
+    default:
+      return null;
   }
 }
 
 export function ExtractionPanel({ data }: { data: ExtractionResponse }) {
   const generatedAt = new Date(data.created_at);
   const isActionItems = data.extraction_type === "action_items";
-  
+
   // Smart detection: Count actionable vs informational items
   let actionableCount = 0;
   let informationalCount = 0;
-  
+
   if (isActionItems && data.items) {
-    (data.items as ActionItem[]).forEach(item => {
+    (data.items as ActionItem[]).forEach((item) => {
       if (isTaskActionable(item.task)) {
         actionableCount++;
       } else {
@@ -276,9 +326,11 @@ export function ExtractionPanel({ data }: { data: ExtractionResponse }) {
                     Mixed Content Detected
                   </p>
                   <p className="text-blue-600/90 dark:text-blue-400/90">
-                    Found {actionableCount} actionable task{actionableCount !== 1 ? 's' : ''} (with checkboxes) 
-                    and {informationalCount} key point{informationalCount !== 1 ? 's' : ''} (numbered). 
-                    Check off tasks as you complete them!
+                    Found {actionableCount} actionable task
+                    {actionableCount !== 1 ? "s" : ""} (with checkboxes) and{" "}
+                    {informationalCount} key point
+                    {informationalCount !== 1 ? "s" : ""} (numbered). Check off
+                    tasks as you complete them!
                   </p>
                 </>
               ) : hasActionable ? (
@@ -287,8 +339,10 @@ export function ExtractionPanel({ data }: { data: ExtractionResponse }) {
                     To-Do List from Video
                   </p>
                   <p className="text-blue-600/90 dark:text-blue-400/90">
-                    {actionableCount} actionable task{actionableCount !== 1 ? 's' : ''} extracted. 
-                    Check them off as you complete them in real life. Status is saved for this session.
+                    {actionableCount} actionable task
+                    {actionableCount !== 1 ? "s" : ""} extracted. Check them off
+                    as you complete them in real life. Status is saved for this
+                    session.
                   </p>
                 </>
               ) : (
@@ -297,7 +351,8 @@ export function ExtractionPanel({ data }: { data: ExtractionResponse }) {
                     Key Points & Recommendations
                   </p>
                   <p className="text-blue-600/90 dark:text-blue-400/90">
-                    These are important points and recommendations mentioned in the video for your reference.
+                    These are important points and recommendations mentioned in
+                    the video for your reference.
                   </p>
                 </>
               )}
@@ -305,7 +360,7 @@ export function ExtractionPanel({ data }: { data: ExtractionResponse }) {
           </div>
         </div>
       )}
-      
+
       <div className="grid gap-4 md:grid-cols-2">
         {renderExtractionItems(data.extraction_type, data.items)}
       </div>
@@ -328,4 +383,3 @@ export function ExtractionPanel({ data }: { data: ExtractionResponse }) {
     </div>
   );
 }
-

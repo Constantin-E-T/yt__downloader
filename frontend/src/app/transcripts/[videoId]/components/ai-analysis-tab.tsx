@@ -157,11 +157,13 @@ export function AIAnalysisTab({
                             )}
                           </div>
                         </div>
-                        
-                        <span className={cn(
-                          "text-sm font-semibold capitalize truncate w-full",
-                          isActive ? "text-primary" : "text-foreground"
-                        )}>
+
+                        <span
+                          className={cn(
+                            "text-sm font-semibold capitalize truncate w-full",
+                            isActive ? "text-primary" : "text-foreground"
+                          )}
+                        >
                           {option.label}
                         </span>
                         <span className="text-xs text-muted-foreground line-clamp-2 w-full">
@@ -258,11 +260,13 @@ export function AIAnalysisTab({
                             )}
                           </div>
                         </div>
-                        
-                        <span className={cn(
-                          "text-sm font-semibold capitalize truncate w-full",
-                          isActive ? "text-primary" : "text-foreground"
-                        )}>
+
+                        <span
+                          className={cn(
+                            "text-sm font-semibold capitalize truncate w-full",
+                            isActive ? "text-primary" : "text-foreground"
+                          )}
+                        >
                           {option.label}
                         </span>
                         <span className="text-xs text-muted-foreground line-clamp-2 w-full">
