@@ -35,7 +35,7 @@ export default function RootLayout({
         <ThemeProvider>
           <div className="flex min-h-screen flex-col bg-background text-foreground">
             <Navbar />
-            <main className="flex-1 overflow-hidden">{children}</main>
+            <main className="flex-1">{children}</main>
             <ConditionalFooter />
           </div>
         </ThemeProvider>
