@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YT Transcript Downloader - AI-Powered YouTube Transcript Analysis",
+  title: "TranscriptAI - AI-Powered YouTube Transcript Analysis",
   description:
-    "Download YouTube transcripts and analyze them with AI. Get summaries, extract code, quotes, and action items from any YouTube video.",
+    "Transform YouTube videos into actionable insights. Download transcripts and analyze them with AI. Get summaries, extract code, quotes, and action items from any YouTube video. By Conn.Digital.",
 };
 
 export default function RootLayout({

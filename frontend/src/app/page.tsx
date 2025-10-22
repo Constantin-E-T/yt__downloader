@@ -6,9 +6,9 @@ import { FAQSection } from "@/components/landing/faq-section";
 import { CTASection } from "@/components/landing/cta-section";
 
 export const metadata: Metadata = {
-  title: "YT Transcript Downloader - AI-Powered YouTube Transcript Analysis",
+  title: "TranscriptAI - AI-Powered YouTube Transcript Analysis",
   description:
-    "Download YouTube transcripts instantly and analyze them with AI. Get summaries, extract code snippets, quotes, and action items. Free during beta.",
+    "Transform YouTube videos into actionable insights with AI. Download transcripts instantly and analyze them with advanced AI. Get summaries, extract code snippets, quotes, and action items. Free during beta. By Conn.Digital.",
 };
 
 export default function Home() {

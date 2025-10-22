@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Pricing - YT Transcript Downloader",
+  title: "Pricing - TranscriptAI by Conn.Digital",
   description:
-    "Currently in free beta. All features available at no cost during our beta period.",
+    "Currently in free beta. All features available at no cost during our beta period. Transform YouTube videos with AI-powered analysis.",
 };
 
 export default function PricingPage() {

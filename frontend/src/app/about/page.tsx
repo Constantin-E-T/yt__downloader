@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Code, Database, Zap, Shield } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About - YT Transcript Downloader",
+  title: "About - TranscriptAI by Conn.Digital",
   description:
-    "Learn about our mission to make YouTube content more accessible and analyzable with AI-powered tools.",
+    "Learn about our mission to make YouTube content more accessible and analyzable with AI-powered tools. Built by Conn.Digital.",
 };
 
 export default function AboutPage() {
@@ -45,9 +45,8 @@ export default function AboutPage() {
             come in.
           </p>
           <p>
-            YT Transcript Downloader was created to bridge the gap between video
-            content and text-based learning. We believe that everyone should be
-            able to:
+            TranscriptAI was created to bridge the gap between video content and
+            text-based learning. We believe that everyone should be able to:
           </p>
           <ul className="ml-6 list-disc space-y-2">
             <li>Search through video content as easily as searching text</li>

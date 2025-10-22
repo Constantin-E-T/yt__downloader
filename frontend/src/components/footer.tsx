@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { Github, Linkedin } from "lucide-react";
 
 export function Footer() {
   return (
@@ -10,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Brand Column */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold">YT Transcript</h3>
+            <h3 className="text-lg font-bold">TranscriptAI</h3>
             <p className="text-sm text-muted-foreground">
               Transform YouTube videos into actionable insights with AI-powered
               analysis.
@@ -18,6 +18,17 @@ export function Footer() {
             <Badge variant="secondary" className="w-fit">
               Free Beta
             </Badge>
+            <p className="text-xs text-muted-foreground">
+              by{" "}
+              <a
+                href="https://conn.digital"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-foreground hover:text-primary"
+              >
+                Conn.Digital
+              </a>
+            </p>
           </div>
 
           {/* Quick Links */}
@@ -64,42 +75,54 @@ export function Footer() {
           {/* Legal/Info */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Connect
+              Legal & Connect
             </h4>
-            <div className="flex gap-4">
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="mailto:contact@conn.digital"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Contact Us
+                </a>
+              </li>
+            </ul>
+            <div className="flex gap-4 pt-2">
               <a
-                href="https://github.com"
+                href="https://github.com/Constantin-E-T"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="GitHub"
               >
                 <Github className="h-5 w-5" />
-                <span className="sr-only">GitHub</span>
               </a>
               <a
-                href="https://twitter.com"
+                href="https://uk.linkedin.com/in/constantin-emilian-tivlica-00a354206"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="LinkedIn"
               >
                 <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
               </a>
             </div>
-            <ul className="space-y-2 text-sm">
-              <li className="text-muted-foreground">Privacy Policy</li>
-              <li className="text-muted-foreground">Terms of Service</li>
-              <li className="text-muted-foreground">Contact</li>
-            </ul>
           </div>
         </div>
 
@@ -107,8 +130,8 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} YT Transcript Downloader. All rights
-            reserved.
+            © {new Date().getFullYear()} TranscriptAI by Conn.Digital. All
+            rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Built with Next.js, Go, and ❤️

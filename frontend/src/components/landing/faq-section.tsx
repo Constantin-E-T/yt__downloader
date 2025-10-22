@@ -58,7 +58,7 @@ export function FAQSection() {
             Frequently Asked Questions
           </h2>
           <p className="text-lg text-muted-foreground">
-            Everything you need to know about YT Transcript Downloader
+            Everything you need to know about TranscriptAI
           </p>
         </div>
 

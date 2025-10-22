@@ -11,9 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { Link2, FileText, Brain, Search, Download } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "How to Use - YT Transcript Downloader",
+  title: "How to Use - TranscriptAI by Conn.Digital",
   description:
-    "Step-by-step guide on how to download and analyze YouTube transcripts with AI.",
+    "Step-by-step guide on how to download and analyze YouTube transcripts with AI. Learn how to get the most out of TranscriptAI.",
 };
 
 export default function HowToUsePage() {
@@ -25,7 +25,7 @@ export default function HowToUsePage() {
           Guide
         </Badge>
         <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-          How to Use YT Transcript
+          How to Use TranscriptAI
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
           Everything you need to know to get started with downloading and
