@@ -1,40 +1,48 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from "react";
-import clsx from "clsx";
 
 import type { QAResponse } from "@/lib/api/qa";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const MIN_QUESTION_LENGTH = 3;
 const MAX_QUESTION_LENGTH = 500;
 
-function QACard({ qa }: { qa: QAResponse }) {
-  const confidenceClass = useMemo(() => {
-    switch (qa.confidence) {
-    case "high":
-      return "bg-green-500/20 text-green-700";
-    case "medium":
-      return "bg-yellow-500/20 text-yellow-700";
-    case "low":
-      return "bg-orange-500/20 text-orange-700";
-    case "not_found":
-    default:
-      return "bg-gray-500/20 text-gray-700";
-    }
-  }, [qa.confidence]);
+const CONFIDENCE_STYLES: Record<QAResponse["confidence"], string> = {
+  high: "border-transparent bg-emerald-500/15 text-emerald-700",
+  medium: "border-transparent bg-amber-500/20 text-amber-700",
+  low: "border-transparent bg-orange-500/20 text-orange-700",
+  not_found: "border-transparent bg-slate-500/20 text-slate-700",
+};
 
+function QACard({ qa }: { qa: QAResponse }) {
+  const confidenceLabel = useMemo(
+    () => qa.confidence.replace("_", " "),
+    [qa.confidence]
+  );
+  const confidenceClass = useMemo(
+    () => CONFIDENCE_STYLES[qa.confidence] ?? CONFIDENCE_STYLES.not_found,
+    [qa.confidence]
+  );
   const timestamp = new Date(qa.created_at);
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-muted/10 p-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-foreground">
-          Q: {qa.question}
-        </p>
-        <span className={clsx("text-xs px-2 py-1 rounded capitalize", confidenceClass)}>
-          {qa.confidence.replace("_", " ")}
-        </span>
+        <p className="text-sm font-medium text-foreground">Q: {qa.question}</p>
+        <Badge variant="outline" className={cn("capitalize", confidenceClass)}>
+          {confidenceLabel}
+        </Badge>
       </div>
 
       <div className="rounded-lg bg-primary/5 p-4">
@@ -125,82 +133,87 @@ export function QASection({
   }
 
   return (
-    <section className="space-y-4 rounded-xl border border-border bg-card p-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">Ask Questions</h2>
-        <p className="text-sm text-muted-foreground">
+    <Card>
+      <CardHeader>
+        <CardTitle>Ask Questions</CardTitle>
+        <CardDescription>
           Ask questions about the transcript content. The AI responds using only the transcript and cites supporting snippets.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <textarea
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="What is the main topic discussed in this video?"
-          className="w-full min-h-[120px] rounded-md border border-input bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          minLength={MIN_QUESTION_LENGTH}
-          maxLength={MAX_QUESTION_LENGTH}
-          disabled={loading || bootstrapping || !transcriptId}
-        />
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            {question.length}/{MAX_QUESTION_LENGTH} characters
-          </span>
-          <div className="flex items-center gap-2">
-            {qaHistory.length > 0 ? (
-              <button
-                type="button"
-                onClick={onClearHistory}
-                className="inline-flex items-center rounded-md border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-muted/50"
-                disabled={loading || bootstrapping}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <textarea
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="What is the main topic discussed in this video?"
+            className="w-full min-h-[120px] rounded-md border border-input bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            minLength={MIN_QUESTION_LENGTH}
+            maxLength={MAX_QUESTION_LENGTH}
+            disabled={loading || bootstrapping || !transcriptId}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>
+              {question.length}/{MAX_QUESTION_LENGTH} characters
+            </span>
+            <div className="flex items-center gap-2">
+              {qaHistory.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onClearHistory}
+                  disabled={loading || bootstrapping}
+                >
+                  Clear history
+                </Button>
+              ) : null}
+              <Button
+                type="submit"
+                size="sm"
+                disabled={
+                  loading ||
+                  bootstrapping ||
+                  question.trim().length < MIN_QUESTION_LENGTH ||
+                  question.trim().length > MAX_QUESTION_LENGTH ||
+                  !transcriptId
+                }
               >
-                Clear history
-              </button>
-            ) : null}
-            <button
-              type="submit"
-              disabled={
-                loading ||
-                bootstrapping ||
-                question.trim().length < MIN_QUESTION_LENGTH ||
-                question.trim().length > MAX_QUESTION_LENGTH ||
-                !transcriptId
-              }
-              className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-primary/50"
-            >
-              {loading ? "Thinking..." : "Ask question"}
-            </button>
+                {loading ? "Thinking..." : "Ask question"}
+              </Button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
 
-      {localError ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {localError}
-        </div>
-      ) : null}
+        {localError ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {localError}
+          </div>
+        ) : null}
 
-      {error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      ) : null}
+        {error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
 
-      {bootstrapping ? (
-        <LoadingSpinner text="Restoring previous questions..." />
-      ) : null}
+        {bootstrapping ? (
+          <LoadingSpinner text="Restoring previous questions..." />
+        ) : null}
 
-      {!bootstrapping && qaHistory.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No questions asked yet. Submit a question above to get started.
-        </p>
-      ) : null}
+        {!bootstrapping && qaHistory.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No questions asked yet. Submit a question above to get started.
+          </p>
+        ) : null}
 
-      {qaHistory.map((qa) => (
-        <QACard key={qa.id} qa={qa} />
-      ))}
-    </section>
+        {qaHistory.length > 0 ? (
+          <div className="space-y-3">
+            {qaHistory.map((qa) => (
+              <QACard key={qa.id} qa={qa} />
+            ))}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
-

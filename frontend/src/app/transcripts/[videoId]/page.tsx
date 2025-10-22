@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   FormEvent,
@@ -16,10 +16,7 @@ import {
   requestTranscriptById,
   type TranscriptResponse,
 } from "@/lib/api/transcripts";
-import {
-  requestSummary,
-  type SummaryResponse,
-} from "@/lib/api/summaries";
+import { requestSummary, type SummaryResponse } from "@/lib/api/summaries";
 import {
   requestExtraction,
   type ExtractionResponse,
@@ -30,6 +27,24 @@ import { TranscriptMeta, TranscriptTable } from "@/components/transcript-table";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { ExtractionPanel } from "@/components/extraction-panel";
 import { QASection } from "@/components/qa-section";
+import {
+  YouTubePlayer,
+  type YouTubePlayerRef,
+} from "@/components/youtube-player";
+import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SUMMARY_OPTIONS = [
   {
@@ -51,7 +66,9 @@ const SUMMARY_OPTIONS = [
 
 type SummaryType = (typeof SUMMARY_OPTIONS)[number]["value"];
 
-const SUMMARY_VALUES = new Set<SummaryType>(SUMMARY_OPTIONS.map((option) => option.value));
+const SUMMARY_VALUES = new Set<SummaryType>(
+  SUMMARY_OPTIONS.map((option) => option.value)
+);
 
 const EXTRACTION_OPTIONS: Array<{
   value: ExtractionType;
@@ -75,7 +92,9 @@ const EXTRACTION_OPTIONS: Array<{
   },
 ];
 
-const EXTRACTION_VALUES = new Set<ExtractionType>(EXTRACTION_OPTIONS.map((option) => option.value));
+const EXTRACTION_VALUES = new Set<ExtractionType>(
+  EXTRACTION_OPTIONS.map((option) => option.value)
+);
 
 const extractionLoadingText: Record<ExtractionType, string> = {
   code: "Extracting code snippets...",
@@ -83,7 +102,17 @@ const extractionLoadingText: Record<ExtractionType, string> = {
   action_items: "Extracting action items...",
 };
 
-function normaliseParam(value: string | string[] | null | undefined): string | undefined {
+const TAB_OPTIONS = ["transcript", "ai", "search", "export"] as const;
+type TabKey = (typeof TAB_OPTIONS)[number];
+const TAB_VALUES = new Set<TabKey>(TAB_OPTIONS);
+
+const AI_TAB_OPTIONS = ["summary", "extract", "qa"] as const;
+type AITab = (typeof AI_TAB_OPTIONS)[number];
+const AI_TAB_VALUES = new Set<AITab>(AI_TAB_OPTIONS);
+
+function normaliseParam(
+  value: string | string[] | null | undefined
+): string | undefined {
   if (Array.isArray(value)) {
     return normaliseParam(value[0]);
   }
@@ -99,6 +128,12 @@ const isSummaryType = (value: string | undefined): value is SummaryType =>
 
 const isExtractionType = (value: string | undefined): value is ExtractionType =>
   Boolean(value) && EXTRACTION_VALUES.has(value as ExtractionType);
+
+const isTabKey = (value: string | undefined): value is TabKey =>
+  Boolean(value) && TAB_VALUES.has(value as TabKey);
+
+const isAITabKey = (value: string | undefined): value is AITab =>
+  Boolean(value) && AI_TAB_VALUES.has(value as AITab);
 
 export default function TranscriptPage() {
   const params = useParams<{ videoId: string }>();
@@ -126,6 +161,14 @@ export default function TranscriptPage() {
     const value = normaliseParam(searchParams.get("extract"));
     return isExtractionType(value) ? value : undefined;
   }, [searchParams]);
+  const tabParam = useMemo(() => {
+    const value = normaliseParam(searchParams.get("tab"));
+    return isTabKey(value) ? value : undefined;
+  }, [searchParams]);
+  const aiTabParam = useMemo(() => {
+    const value = normaliseParam(searchParams.get("aiTab"));
+    return isAITabKey(value) ? value : undefined;
+  }, [searchParams]);
   const qaParams = useMemo(() => {
     const values = searchParams.getAll("qa");
     const normalised = values
@@ -136,7 +179,8 @@ export default function TranscriptPage() {
   }, [searchParams]);
   const qaParamsKey = useMemo(() => qaParams.join("||"), [qaParams]);
 
-  const [transcriptData, setTranscriptData] = useState<TranscriptResponse | null>(null);
+  const [transcriptData, setTranscriptData] =
+    useState<TranscriptResponse | null>(null);
   const [transcriptLoading, setTranscriptLoading] = useState(true);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
 
@@ -152,8 +196,10 @@ export default function TranscriptPage() {
   const [extractionCache, setExtractionCache] = useState<
     Partial<Record<ExtractionType, ExtractionResponse>>
   >({});
-  const [activeExtraction, setActiveExtraction] = useState<ExtractionResponse | null>(null);
-  const [extractionLoadingType, setExtractionLoadingType] = useState<ExtractionType | null>(null);
+  const [activeExtraction, setActiveExtraction] =
+    useState<ExtractionResponse | null>(null);
+  const [extractionLoadingType, setExtractionLoadingType] =
+    useState<ExtractionType | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
 
   const [qaHistory, setQaHistory] = useState<QAResponse[]>([]);
@@ -161,6 +207,14 @@ export default function TranscriptPage() {
   const [qaLoading, setQaLoading] = useState(false);
   const [qaBootstrapping, setQaBootstrapping] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    () => tabParam ?? "transcript"
+  );
+  const [activeAITab, setActiveAITab] = useState<AITab>(
+    () => aiTabParam ?? "summary"
+  );
+  const [currentVideoTime, setCurrentVideoTime] = useState<number>(0);
+  const playerRef = useRef<YouTubePlayerRef>(null);
 
   const transcriptId = transcriptData?.transcript_id ?? null;
   const transcriptVideoId = transcriptData?.video_id ?? null;
@@ -180,11 +234,21 @@ export default function TranscriptPage() {
       const next = new URLSearchParams(searchParams.toString());
       mutator(next);
       const queryString = next.toString();
-      const href = queryString ? `/transcripts/${videoId}?${queryString}` : `/transcripts/${videoId}`;
+      const href = queryString
+        ? `/transcripts/${videoId}?${queryString}`
+        : `/transcripts/${videoId}`;
       router.replace(href, { scroll: false });
     },
     [router, searchParams, videoId]
   );
+
+  const handleSeek = useCallback((seconds: number) => {
+    playerRef.current?.seekTo(seconds);
+  }, []);
+
+  const handleTimeUpdate = useCallback((seconds: number) => {
+    setCurrentVideoTime(seconds);
+  }, []);
 
   useEffect(() => {
     if (!videoId) {
@@ -251,7 +315,14 @@ export default function TranscriptPage() {
     return () => {
       cancelled = true;
     };
-  }, [videoId, transcriptParam, languageParam, updateSearchParams, transcriptId, transcriptVideoId]);
+  }, [
+    videoId,
+    transcriptParam,
+    languageParam,
+    updateSearchParams,
+    transcriptId,
+    transcriptVideoId,
+  ]);
 
   useEffect(() => {
     if (!transcriptId) {
@@ -287,13 +358,17 @@ export default function TranscriptPage() {
       return;
     }
 
-    if (
-      cachedSummary &&
-      cachedSummary.transcript_id === transcriptId
-    ) {
+    if (cachedSummary && cachedSummary.transcript_id === transcriptId) {
       setSummaryData(cachedSummary);
       setSummaryLoading(false);
       setSummaryError(null);
+      return;
+    }
+
+    // Guard: Don't make request if transcriptId is null/undefined
+    if (!transcriptId) {
+      setSummaryLoading(false);
+      setSummaryError("Transcript ID not available. Please try again.");
       return;
     }
 
@@ -330,7 +405,9 @@ export default function TranscriptPage() {
     };
   }, [summaryType, transcriptId, cachedSummary]);
 
-  const cachedExtraction = extractionParam ? extractionCache[extractionParam] : undefined;
+  const cachedExtraction = extractionParam
+    ? extractionCache[extractionParam]
+    : undefined;
 
   useEffect(() => {
     if (!transcriptId) {
@@ -347,13 +424,17 @@ export default function TranscriptPage() {
       return;
     }
 
-    if (
-      cachedExtraction &&
-      cachedExtraction.transcript_id === transcriptId
-    ) {
+    if (cachedExtraction && cachedExtraction.transcript_id === transcriptId) {
       setActiveExtraction(cachedExtraction);
       setExtractionLoadingType(null);
       setExtractionError(null);
+      return;
+    }
+
+    // Guard: Don't make request if transcriptId is null/undefined
+    if (!transcriptId) {
+      setExtractionLoadingType(null);
+      setExtractionError("Transcript ID not available. Please try again.");
       return;
     }
 
@@ -425,7 +506,9 @@ export default function TranscriptPage() {
         .map((qa) => qa.question)
     );
 
-    const missing = qaParams.filter((question) => !existingQuestions.has(question));
+    const missing = qaParams.filter(
+      (question) => !existingQuestions.has(question)
+    );
 
     if (missing.length === 0) {
       setQaBootstrapping(false);
@@ -486,7 +569,11 @@ export default function TranscriptPage() {
 
   const handleSelectSummary = useCallback(
     (type: SummaryType) => {
+      setActiveTab("ai");
+      setActiveAITab("summary");
       updateSearchParams((params) => {
+        params.set("tab", "ai");
+        params.set("aiTab", "summary");
         params.set("summary", type);
       });
     },
@@ -501,7 +588,11 @@ export default function TranscriptPage() {
 
   const handleSelectExtraction = useCallback(
     (type: ExtractionType) => {
+      setActiveTab("ai");
+      setActiveAITab("extract");
       updateSearchParams((params) => {
+        params.set("tab", "ai");
+        params.set("aiTab", "extract");
         params.set("extract", type);
       });
     },
@@ -524,6 +615,8 @@ export default function TranscriptPage() {
         return;
       }
 
+      setActiveTab("ai");
+      setActiveAITab("qa");
       setQaLoading(true);
       setQaError(null);
 
@@ -541,6 +634,8 @@ export default function TranscriptPage() {
 
         setQaHistory((prev) => [...prev, data]);
         updateSearchParams((params) => {
+          params.set("tab", "ai");
+          params.set("aiTab", "qa");
           const existing = params.getAll("qa");
           if (!existing.includes(question)) {
             params.append("qa", question);
@@ -550,7 +645,7 @@ export default function TranscriptPage() {
         setQaLoading(false);
       }
     },
-    [transcriptId, updateSearchParams]
+    [setActiveAITab, setActiveTab, transcriptId, updateSearchParams]
   );
 
   const handleClearQAHistory = useCallback(() => {
@@ -566,237 +661,514 @@ export default function TranscriptPage() {
     return id ? `https://youtube.com/watch?v=${id}` : undefined;
   }, [transcriptVideoId, videoId]);
 
+  const resolvedVideoId = transcriptData?.video_id ?? videoId ?? null;
+  const transcriptReady = Boolean(transcriptData) && !transcriptError;
+
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-4 py-10">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
-          >
-            ← Back to fetcher
-          </Link>
-          {shareUrl ? (
-            <a
-              href={shareUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline"
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row">
+      <aside className="w-full lg:w-[400px] lg:flex-shrink-0">
+        <div className="space-y-4 lg:sticky lg:top-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Video Player
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-hidden p-0">
+              <div className="px-4 pb-4">
+                {resolvedVideoId ? (
+                  <YouTubePlayer
+                    ref={playerRef}
+                    videoId={resolvedVideoId}
+                    onTimeUpdate={handleTimeUpdate}
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    <Skeleton className="h-48 w-full rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg leading-snug">
+                {transcriptData?.title ?? "Transcript details"}
+              </CardTitle>
+              <CardDescription>
+                Keep the key metadata handy while you explore the transcript.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+              {transcriptData ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary">
+                      {transcriptData.language.toUpperCase()}
+                    </Badge>
+                    <Separator
+                      orientation="vertical"
+                      className="hidden h-4 lg:block"
+                    />
+                    <span className="text-muted-foreground">
+                      {transcriptData.transcript.length.toLocaleString()} lines
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <p>
+                      <span className="font-semibold text-foreground">
+                        Video ID:
+                      </span>{" "}
+                      <span className="font-mono">
+                        {transcriptData.video_id}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="font-semibold text-foreground">
+                        Transcript ID:
+                      </span>{" "}
+                      <span className="font-mono">
+                        {transcriptData.transcript_id}
+                      </span>
+                    </p>
+                  </div>
+                  <TranscriptMeta transcript={transcriptData.transcript} />
+                  {shareUrl ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="w-full justify-center"
+                    >
+                      <a
+                        href={shareUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open on YouTube
+                      </a>
+                    </Button>
+                  ) : null}
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </aside>
+
+      <main className="min-w-0 flex-1">
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
             >
-              Open on YouTube ↗
-            </a>
-          ) : null}
+              ← Back to fetcher
+            </Link>
+            {shareUrl ? (
+              <Button
+                variant="ghost"
+                asChild
+                className="h-auto px-0 text-sm font-medium text-primary hover:text-primary"
+              >
+                <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                  Watch on YouTube ↗
+                </a>
+              </Button>
+            ) : null}
+          </div>
+
+          {transcriptData ? (
+            <header className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                {transcriptData.title}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Navigate the transcript, AI insights, and search tools without
+                losing your place in the video.
+              </p>
+            </header>
+          ) : (
+            <div className="space-y-2">
+              <Skeleton className="h-9 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          )}
         </div>
 
-        {transcriptData ? (
-          <header className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              {transcriptData.title}
-            </h1>
-            <div className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Video ID:</span>{" "}
-              {transcriptData.video_id}
-              <span className="mx-2 text-foreground/40">•</span>
-              <span className="font-medium text-foreground">Language:</span>{" "}
-              {transcriptData.language.toUpperCase()}
-            </div>
-            <TranscriptMeta transcript={transcriptData.transcript} />
-          </header>
+        {transcriptError ? (
+          <Card className="border-destructive/50 bg-destructive/10">
+            <CardHeader>
+              <CardTitle className="text-destructive">
+                Unable to load transcript
+              </CardTitle>
+              <CardDescription className="text-destructive/80">
+                {transcriptError}
+              </CardDescription>
+            </CardHeader>
+          </Card>
         ) : null}
-      </div>
 
-      {transcriptLoading ? (
-        <LoadingSpinner text="Fetching transcript..." />
-      ) : null}
+        {transcriptLoading && !transcriptData ? (
+          <Card className="border-dashed">
+            <CardContent className="space-y-4 p-6">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-[440px] w-full rounded-lg" />
+            </CardContent>
+          </Card>
+        ) : null}
 
-      {!transcriptLoading && transcriptError ? (
-        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-6">
-          <h2 className="text-xl font-semibold text-destructive">
-            Unable to load transcript
-          </h2>
-          <p className="mt-2 text-sm text-destructive/80">{transcriptError}</p>
-        </div>
-      ) : null}
+        {transcriptReady && transcriptData ? (
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => {
+              if (isTabKey(value)) {
+                setActiveTab(value);
+                updateSearchParams((params) => {
+                  params.set("tab", value);
+                  if (value !== "ai") {
+                    params.delete("aiTab");
+                  }
+                });
+              }
+            }}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="transcript">
+                <span className="hidden sm:inline">📝 Transcript</span>
+                <span className="sm:hidden">📝</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai">
+                <span className="hidden sm:inline">🤖 AI Analysis</span>
+                <span className="sm:hidden">🤖</span>
+              </TabsTrigger>
+              <TabsTrigger value="search">
+                <span className="hidden sm:inline">🔍 Search</span>
+                <span className="sm:hidden">🔍</span>
+              </TabsTrigger>
+              <TabsTrigger value="export">
+                <span className="hidden sm:inline">💾 Export</span>
+                <span className="sm:hidden">💾</span>
+              </TabsTrigger>
+            </TabsList>
 
-      {!transcriptLoading && !transcriptError && transcriptData ? (
-        <>
-          <section className="space-y-4">
-            <form className="flex flex-col gap-3" onSubmit={handleSearchSubmit}>
-              <div>
-                <label htmlFor="query" className="text-sm font-medium text-foreground">
-                  Search transcript
-                </label>
-                <input
-                  id="query"
-                  name="query"
-                  type="text"
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder="Keyword or phrase"
-                  className="mt-1 h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
+            <TabsContent value="transcript" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Full Transcript</CardTitle>
+                  <CardDescription>
+                    Click any timestamp to jump to that moment in the video.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[600px]">
+                    <div className="p-4">
+                      <TranscriptTable
+                        transcript={transcriptData.transcript}
+                        currentTime={currentVideoTime}
+                        onSeek={handleSeek}
+                        disableInternalScroll
+                      />
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  Apply search
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition hover:bg-muted/40"
-                >
-                  Clear
-                </button>
-              </div>
-            </form>
+            <TabsContent value="ai" className="mt-6">
+              <Tabs
+                value={activeAITab}
+                onValueChange={(value) => {
+                  if (isAITabKey(value)) {
+                    setActiveAITab(value);
+                    updateSearchParams((params) => {
+                      params.set("aiTab", value);
+                    });
+                  }
+                }}
+              >
+                <TabsList className="flex flex-wrap gap-2">
+                  <TabsTrigger value="summary">Summarize</TabsTrigger>
+                  <TabsTrigger value="extract">Extract</TabsTrigger>
+                  <TabsTrigger value="qa">Q&amp;A</TabsTrigger>
+                </TabsList>
 
-            {queryParam ? (
-              <p className="text-sm text-muted-foreground">
-                Showing results containing{" "}
-                <span className="font-medium text-foreground">
-                  &ldquo;{queryParam}&rdquo;
-                </span>
-                .
-              </p>
-            ) : null}
+                <TabsContent value="summary" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>AI Summary</CardTitle>
+                      <CardDescription>
+                        Generate cached summaries via the backend AI service.
+                        Repeat requests reuse cached results for faster
+                        responses.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {SUMMARY_OPTIONS.map((option) => {
+                          const isActive = summaryType === option.value;
+                          return (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant="outline"
+                              onClick={() => handleSelectSummary(option.value)}
+                              className={cn(
+                                "h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left overflow-hidden",
+                                isActive
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "bg-background text-foreground hover:border-primary/60 hover:bg-muted/40"
+                              )}
+                            >
+                              <span className="text-sm font-semibold capitalize truncate w-full">
+                                {option.label}
+                              </span>
+                              <span className="text-xs text-muted-foreground line-clamp-2 w-full">
+                                {option.description}
+                              </span>
+                            </Button>
+                          );
+                        })}
+                      </div>
 
-            <TranscriptTable transcript={transcriptData.transcript} query={queryParam} />
-          </section>
+                      {summaryType ? (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <span className="text-sm text-muted-foreground">
+                            {summaryLoading
+                              ? "Generating summary..."
+                              : "Summary ready. You can clear the selection to reset."}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={handleClearSummary}
+                            disabled={summaryLoading}
+                          >
+                            Clear summary
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Select a summary type above to generate an AI summary.
+                        </p>
+                      )}
 
-          <section className="space-y-4 rounded-xl border border-border bg-card p-6">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-foreground">AI summary</h2>
-              <p className="text-sm text-muted-foreground">
-                Generate cached summaries via the backend AI service. Repeat requests reuse cached results for faster responses.
-              </p>
-            </div>
+                      {summaryError ? (
+                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                          {summaryError}
+                        </div>
+                      ) : null}
 
-            <div className="flex flex-wrap gap-3">
-              {SUMMARY_OPTIONS.map((option) => {
-                const isActive = summaryType === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handleSelectSummary(option.value)}
-                    className={`flex min-w-[180px] flex-1 cursor-pointer flex-col gap-1 rounded-lg border px-4 py-3 text-left transition ${
-                      isActive
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-muted/30 text-foreground hover:border-primary/60 hover:bg-muted/50"
-                    }`}
+                      {summaryLoading ? (
+                        <LoadingSpinner text="Generating summary..." />
+                      ) : null}
+
+                      {!summaryLoading && summaryType && summaryData ? (
+                        <SummaryPanel summary={summaryData} />
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="extract" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Content Extraction</CardTitle>
+                      <CardDescription>
+                        Identify code snippets, key quotes, or actionable next
+                        steps sourced from the transcript.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {EXTRACTION_OPTIONS.map((option) => {
+                          const isActive = extractionParam === option.value;
+                          return (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                handleSelectExtraction(option.value)
+                              }
+                              className={cn(
+                                "h-auto w-full flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left overflow-hidden",
+                                isActive
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "bg-background text-foreground hover:border-primary/60 hover:bg-muted/40"
+                              )}
+                            >
+                              <span className="text-sm font-semibold capitalize truncate w-full">
+                                {option.label}
+                              </span>
+                              <span className="text-xs text-muted-foreground line-clamp-2 w-full">
+                                {option.description}
+                              </span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      {extractionParam ? (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <span className="text-sm text-muted-foreground">
+                            {extractionLoadingType
+                              ? extractionLoadingText[extractionLoadingType]
+                              : "Extraction ready. Clear the selection to choose another type."}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={handleClearExtraction}
+                            disabled={Boolean(extractionLoadingType)}
+                          >
+                            Clear extraction
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Choose an extraction type above to analyse the
+                          transcript.
+                        </p>
+                      )}
+
+                      {extractionError ? (
+                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                          {extractionError}
+                        </div>
+                      ) : null}
+
+                      {extractionLoadingType ? (
+                        <LoadingSpinner
+                          text={extractionLoadingText[extractionLoadingType]}
+                        />
+                      ) : null}
+
+                      {!extractionLoadingType && activeExtraction ? (
+                        <ExtractionPanel data={activeExtraction} />
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="qa" className="mt-4">
+                  <QASection
+                    transcriptId={transcriptData.transcript_id}
+                    qaHistory={qaHistory}
+                    onAskQuestion={handleAskQuestion}
+                    onClearHistory={handleClearQAHistory}
+                    loading={qaLoading}
+                    bootstrapping={qaBootstrapping}
+                    error={qaError}
+                  />
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            <TabsContent value="search" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Search Transcript</CardTitle>
+                  <CardDescription>
+                    Filter transcript lines by keyword and jump straight to the
+                    moments that matter.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <form
+                    className="flex flex-col gap-3 sm:flex-row sm:items-end"
+                    onSubmit={handleSearchSubmit}
                   >
-                    <span className="text-sm font-semibold capitalize">{option.label}</span>
-                    <span className="text-xs text-muted-foreground">{option.description}</span>
-                  </button>
-                );
-              })}
+                    <div className="flex-1">
+                      <label
+                        htmlFor="query"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Search query
+                      </label>
+                      <input
+                        id="query"
+                        name="query"
+                        type="text"
+                        value={searchValue}
+                        onChange={(event) => setSearchValue(event.target.value)}
+                        placeholder="Keyword or phrase"
+                        className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1 sm:flex-none">
+                        Apply search
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleClearSearch}
+                        className="flex-1 sm:flex-none"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </form>
 
-              {summaryType ? (
-                <button
-                  type="button"
-                  onClick={handleClearSummary}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition hover:bg-muted/40"
-                >
-                  Clear summary
-                </button>
-              ) : null}
-            </div>
+                  {queryParam ? (
+                    <p className="text-sm text-muted-foreground">
+                      Showing results containing{" "}
+                      <span className="font-medium text-foreground">
+                        &ldquo;{queryParam}&rdquo;
+                      </span>
+                      .
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Use the search field above to filter transcript lines and
+                      highlight matching phrases.
+                    </p>
+                  )}
 
-            {summaryError ? (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {summaryError}
-              </div>
-            ) : null}
+                  <ScrollArea className="h-[520px]">
+                    <div className="pr-4">
+                      <TranscriptTable
+                        transcript={transcriptData.transcript}
+                        query={queryParam}
+                        currentTime={currentVideoTime}
+                        onSeek={handleSeek}
+                        disableInternalScroll
+                      />
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            {summaryLoading ? (
-              <LoadingSpinner text="Generating summary..." />
-            ) : null}
-
-            {!summaryType ? (
-              <p className="text-sm text-muted-foreground">
-                Select a summary type above to generate an AI summary.
-              </p>
-            ) : null}
-
-            {!summaryLoading && summaryType && summaryData ? (
-              <SummaryPanel summary={summaryData} />
-            ) : null}
-          </section>
-
-          <section className="space-y-4 rounded-xl border border-border bg-card p-6">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-foreground">Content Extraction</h2>
-              <p className="text-sm text-muted-foreground">
-                Identify code snippets, key quotes, or actionable next steps sourced from the transcript.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              {EXTRACTION_OPTIONS.map((option) => {
-                const isActive = extractionParam === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handleSelectExtraction(option.value)}
-                    className={`flex min-w-[180px] flex-1 cursor-pointer flex-col gap-1 rounded-lg border px-4 py-3 text-left transition ${
-                      isActive
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-muted/30 text-foreground hover:border-primary/60 hover:bg-muted/50"
-                    }`}
-                  >
-                    <span className="text-sm font-semibold capitalize">{option.label}</span>
-                    <span className="text-xs text-muted-foreground">{option.description}</span>
-                  </button>
-                );
-              })}
-              {extractionParam ? (
-                <button
-                  type="button"
-                  onClick={handleClearExtraction}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition hover:bg-muted/40"
-                >
-                  Clear extraction
-                </button>
-              ) : null}
-            </div>
-
-            {extractionError ? (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {extractionError}
-              </div>
-            ) : null}
-
-            {extractionLoadingType ? (
-              <LoadingSpinner text={extractionLoadingText[extractionLoadingType]} />
-            ) : null}
-
-            {!extractionParam ? (
-              <p className="text-sm text-muted-foreground">
-                Choose an extraction type above to analyse the transcript.
-              </p>
-            ) : null}
-
-            {!extractionLoadingType && activeExtraction ? (
-              <ExtractionPanel data={activeExtraction} />
-            ) : null}
-          </section>
-
-          <QASection
-            transcriptId={transcriptData.transcript_id}
-            qaHistory={qaHistory}
-            onAskQuestion={handleAskQuestion}
-            onClearHistory={handleClearQAHistory}
-            loading={qaLoading}
-            bootstrapping={qaBootstrapping}
-            error={qaError}
-          />
-        </>
-      ) : null}
+            <TabsContent value="export" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Export Transcript</CardTitle>
+                  <CardDescription>
+                    Save structured content for use in other tools.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Export options coming soon. Let us know which formats
+                    you&apos;d like to see first!
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        ) : null}
+      </main>
     </div>
   );
 }
@@ -809,7 +1181,9 @@ function SummaryPanel({ summary }: { summary: SummaryResponse }) {
   return (
     <div className="space-y-4 text-sm text-foreground">
       {content.text ? (
-        <p className="text-base leading-relaxed text-foreground/90">{content.text}</p>
+        <p className="text-base leading-relaxed text-foreground/90">
+          {content.text}
+        </p>
       ) : null}
 
       {content.key_points && content.key_points.length > 0 ? (
@@ -839,7 +1213,9 @@ function SummaryPanel({ summary }: { summary: SummaryResponse }) {
                 <p className="text-sm font-semibold text-foreground/90">
                   {section.title || `Section ${index + 1}`}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">{section.content}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {section.content}
+                </p>
               </div>
             ))}
           </div>
@@ -849,7 +1225,9 @@ function SummaryPanel({ summary }: { summary: SummaryResponse }) {
       <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
         <span>
           Model:{" "}
-          <span className="font-medium text-foreground/80">{summary.model}</span>
+          <span className="font-medium text-foreground/80">
+            {summary.model}
+          </span>
         </span>
         <span className="text-foreground/30">•</span>
         <span>
