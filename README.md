@@ -120,7 +120,7 @@ Visit http://localhost:3000 and drop in a YouTube URL. The transcript workspace 
 
 Check `docs/project/STATUS.md` for the latest progress tracker.
 
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions.
+See [docs/deployment/DEPLOYMENT.md](docs/deployment/DEPLOYMENT.md) for detailed deployment instructions.
 
 ## Project Structure
 
@@ -219,7 +219,7 @@ See [docs/project/STATUS.md](docs/project/STATUS.md) for detailed progress track
 For issues, questions, or contributions:
 - Open an issue on GitHub
 - Check existing documentation in [docs/](docs/)
-- Review the [project plan](docs/PROJECT_PLAN.md)
+- Review the [project plan](docs/project/PROJECT_PLAN.md)
 
 ---
 

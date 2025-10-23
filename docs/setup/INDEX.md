@@ -12,26 +12,26 @@
 1. **[START_HERE.txt](START_HERE.txt)** - Welcome message
 2. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Complete workflow guide
 3. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick lookup card
-4. **[README.md](README.md)** - Project overview
+4. **[README.md](../../README.md)** - Project overview
 
 ---
 
 ## 🎯 For Master Agent
 
 ### Rules & Guides
-- **[.agents/master/rules/MASTER_AGENT_RULES.md](.agents/master/rules/MASTER_AGENT_RULES.md)**
+- **[.agents/master/rules/MASTER_AGENT_RULES.md](../../.agents/master/rules/MASTER_AGENT_RULES.md)**
   - Your operational rules
   - Coordination protocol
   - Approval process
   - Quality gates
 
-- **[.agents/master/docs/MASTER_PROMPTS.md](.agents/master/docs/MASTER_PROMPTS.md)**
+- **[.agents/master/docs/MASTER_PROMPTS.md](../../.agents/master/docs/MASTER_PROMPTS.md)**
   - Token-efficient prompt templates
   - Examples for each agent type
   - Compact prompt patterns
 
 ### Verification
-- **[docs/VERIFICATION_RULES.md](docs/VERIFICATION_RULES.md)**
+- **[docs/VERIFICATION_RULES.md](../development/VERIFICATION_RULES.md)**
   - Quality checklists
   - Verification commands
   - Security checks
@@ -42,14 +42,14 @@
 ## 🤖 For Specialized Agents
 
 ### Backend Agent (Go)
-- **[.agents/backend/rules/BACKEND_AGENT_RULES.md](.agents/backend/rules/BACKEND_AGENT_RULES.md)**
+- **[.agents/backend/rules/BACKEND_AGENT_RULES.md](../../.agents/backend/rules/BACKEND_AGENT_RULES.md)**
   - Go coding standards
   - File organization (<200 lines)
   - Testing requirements (>80% coverage)
   - API design patterns
 
 ### Frontend Agent (Solid.js)
-- **[.agents/frontend/rules/FRONTEND_AGENT_RULES.md](.agents/frontend/rules/FRONTEND_AGENT_RULES.md)**
+- **[.agents/frontend/rules/FRONTEND_AGENT_RULES.md](../../.agents/frontend/rules/FRONTEND_AGENT_RULES.md)**
   - Solid.js best practices
   - Component design (<150 lines)
   - TypeScript strict mode
@@ -57,21 +57,21 @@
   - Accessibility requirements
 
 ### DevOps Agent (Infrastructure)
-- **[.agents/devops/rules/DEVOPS_AGENT_RULES.md](.agents/devops/rules/DEVOPS_AGENT_RULES.md)**
+- **[.agents/devops/rules/DEVOPS_AGENT_RULES.md](../../.agents/devops/rules/DEVOPS_AGENT_RULES.md)**
   - Docker best practices
   - Multi-stage builds
   - Health checks
   - Image size limits (<50MB backend, <30MB frontend)
 
 ### Database Agent (PostgreSQL)
-- **[.agents/database/rules/DATABASE_AGENT_RULES.md](.agents/database/rules/DATABASE_AGENT_RULES.md)**
+- **[.agents/database/rules/DATABASE_AGENT_RULES.md](../../.agents/database/rules/DATABASE_AGENT_RULES.md)**
   - Migration standards
   - Schema design patterns
   - Index strategy
   - Query optimization
 
 ### Report Template
-- **[.agents/REPORT_TEMPLATE.md](.agents/REPORT_TEMPLATE.md)**
+- **[.agents/REPORT_TEMPLATE.md](../../.agents/REPORT_TEMPLATE.md)**
   - Standard report format
   - Required sections
   - Verification evidence
@@ -82,20 +82,20 @@
 ## 📋 Project Documentation
 
 ### Planning
-- **[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)**
+- **[docs/PROJECT_PLAN.md](../project/PROJECT_PLAN.md)**
   - 8 development phases
   - Detailed task breakdown
   - ~31 day timeline
   - Success criteria
 
-- **[docs/project/STATUS.md](docs/project/STATUS.md)**
+- **[docs/project/STATUS.md](../project/STATUS.md)**
   - Current phase: Phase 0
   - Progress tracker
   - Next steps
   - Metrics
 
 ### Technical
-- **[docs/TECH_STACK.md](docs/TECH_STACK.md)**
+- **[docs/TECH_STACK.md](../development/TECH_STACK.md)**
   - Backend: Go 1.23+, Chi, pgx v5
   - Frontend: Solid.js, Bun, TailwindCSS
   - Database: PostgreSQL 16
