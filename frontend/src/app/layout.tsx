@@ -19,6 +19,12 @@ export const metadata: Metadata = {
   title: "TranscriptAI - AI-Powered YouTube Transcript Analysis",
   description:
     "Transform YouTube videos into actionable insights. Download transcripts and analyze them with AI. Get summaries, extract code, quotes, and action items from any YouTube video. By Conn.Digital.",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 };
 
 export default function RootLayout({

@@ -39,7 +39,8 @@ cd yt-transcript-downloader
 cp .env.example .env
 ```
 
-Optional: duplicate `backend/.env` and `backend/.env.production` from the provided templates in the repo, then set API keys (OpenAI/Anthropic) and database credentials.
+Optional: duplicate `backend/.env` and `backend/.env.production` from the provided templates in the repo, then set API keys (OpenAI/Anthropic) and database credentials.  
+__New__: `CORS_ALLOWED_ORIGINS` accepts a comma-separated list so you can whitelist additional frontends without editing code. Defaults cover local dev plus `https://transcriptai.serverplus.org`.
 
 ### 2. Bring up Postgres
 

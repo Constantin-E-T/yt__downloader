@@ -1,4 +1,4 @@
-# Project Status – 2025-10-22
+# Project Status – 2025-10-23
 
 **Current Phase**: Phase 7 – Export & Sharing  
 **Overall Progress**: 80% (6 phases complete, 1 in progress, 1 pending)
@@ -12,6 +12,7 @@
 - Hardened AI workspace (transcript, search, AI tabs) with URL-driven state management.
 - Stood up dedicated Postgres instances for development and production environments.
 - MCP configuration in place for shadcn component discovery across Codex/VS Code/Cursor.
+- Centralized CORS configuration with env-driven allow-list so production frontend ↔ backend traffic stays unblocked while keeping local defaults intact.
 
 ---
 
@@ -61,7 +62,7 @@ Mitigations are tracked in `docs/PROJECT_PLAN.md` Phase 7.
 ---
 
 ## Metrics
-- **Backend tests**: `go test ./...` – ✅ passing (latest run 2025-10-21).
+- **Backend tests**: `go test ./...` – ✅ passing (latest run 2025-10-23).
 - **Frontend linting**: `pnpm lint` – ✅ clean.
 - **Performance**: Transcript fetch < 2s (cached), AI calls 2–5s uncached, <100ms cached.
 - **Uptime**: No incidents reported in staging.

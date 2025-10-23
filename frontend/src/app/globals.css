@@ -116,6 +116,44 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  /* Root scaling to match 80% zoom appearance at 100% zoom */
+  html {
+    /* Scale down to 80% to match development appearance */
+    font-size: 80%;
+  }
+
+  /* Responsive adjustments for different screen sizes */
+  @media (min-width: 640px) {
+    html {
+      font-size: 80%;
+    }
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 80%;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 80%;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      font-size: 80%;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    html {
+      font-size: 85%; /* Slightly larger for very large screens */
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
   }
