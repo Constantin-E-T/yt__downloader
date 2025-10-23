@@ -31,18 +31,15 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full shrink-0 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-3">
+        <Link href="/" className="flex items-center">
           <Image
             src="/logo.png"
             alt="TranscriptAI Logo"
-            width={32}
-            height={32}
+            width={48}
+            height={48}
             className="rounded-md"
             priority
           />
-          <span className="text-xl font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            TranscriptAI
-          </span>
         </Link>
 
         {/* Desktop Navigation */}
