@@ -47,8 +47,10 @@ rsync -a \
     --exclude='.env.local' \
     "${PROJECT_ROOT}/frontend/" "$TEMP_DIR/frontend/"
 
-# Copy captain-definition
+# Copy captain-definition and nginx config
+mkdir -p "$TEMP_DIR/deploy/caprover"
 cp "${DEPLOY_DIR}/captain-definition" "$TEMP_DIR/"
+cp "${DEPLOY_DIR}/nginx.conf" "$TEMP_DIR/deploy/caprover/"
 
 # Create tarball from temp directory
 echo "Creating deployment tarball..."
