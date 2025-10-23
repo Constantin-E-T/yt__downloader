@@ -1,0 +1,10 @@
+.env
+.env.*
+*.test
+*_test.go
+test_*.go
+data/
+bin/
+main
+.git
+.gitignore

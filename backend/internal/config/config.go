@@ -122,7 +122,7 @@ func (c *Config) Validate() error {
 	}
 
 	// AI configuration validation
-	if c.OpenAIAPIKey == "" && c.AnthropicAPIKey == "" {
+	if c.OpenAIAPIKey == "" && c.AnthropicAPIKey == "" && c.GoogleAPIKey == "" {
 		errors = append(errors, "at least one AI provider API key required")
 	}
 
