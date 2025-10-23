@@ -3,16 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/server/backend-client";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     transcriptId: string;
-  };
+  }>;
 };
 
 export async function POST(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteParams
 ) {
   try {
+    const params = await context.params;
     const body = await request.text();
     const contentType =
       request.headers.get("content-type") ?? "application/json";

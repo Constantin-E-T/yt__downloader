@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/lib/api/transcripts";
+import { API_BASE_PATH } from "@/lib/api/transcripts";
 
 export type ExtractionType = "code" | "quotes" | "action_items";
 
@@ -116,9 +116,7 @@ export async function requestExtraction(params: {
 }): Promise<{ data?: ExtractionResponse; error?: string }> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/transcripts/${encodeURIComponent(
-        params.transcriptId
-      )}/extract`,
+      `${API_BASE_PATH}/${encodeURIComponent(params.transcriptId)}/extract`,
       {
         method: "POST",
         headers: {
@@ -164,4 +162,3 @@ export async function requestExtraction(params: {
     return { error: message };
   }
 }
-

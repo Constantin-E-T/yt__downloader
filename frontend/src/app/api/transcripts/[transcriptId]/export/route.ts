@@ -3,16 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/server/backend-client";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     transcriptId: string;
-  };
+  }>;
 };
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteParams
 ) {
   try {
+    const params = await context.params;
     const searchParams = request.nextUrl.searchParams;
     const format = searchParams.get("format") ?? "json";
 

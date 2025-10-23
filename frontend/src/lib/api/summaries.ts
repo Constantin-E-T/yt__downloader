@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/lib/api/transcripts";
+import { API_BASE_PATH } from "@/lib/api/transcripts";
 
 type SummaryContent = {
   text: string;
@@ -28,7 +28,7 @@ export async function requestSummary(params: {
 }): Promise<{ data?: SummaryResponse; error?: string }> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/transcripts/${encodeURIComponent(params.transcriptId)}/summarize`,
+      `${API_BASE_PATH}/${encodeURIComponent(params.transcriptId)}/summarize`,
       {
         method: "POST",
         headers: {
@@ -58,4 +58,3 @@ export async function requestSummary(params: {
     return { error: message };
   }
 }
-

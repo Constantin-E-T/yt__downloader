@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/lib/api/transcripts";
+import { API_BASE_PATH } from "@/lib/api/transcripts";
 
 export type QAResponse = {
   id: string;
@@ -81,9 +81,7 @@ export async function requestQA(params: {
 }): Promise<{ data?: QAResponse; error?: string }> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/transcripts/${encodeURIComponent(
-        params.transcriptId
-      )}/qa`,
+      `${API_BASE_PATH}/${encodeURIComponent(params.transcriptId)}/qa`,
       {
         method: "POST",
         headers: {
@@ -127,4 +125,3 @@ export async function requestQA(params: {
     return { error: message };
   }
 }
-

@@ -1,21 +1,4 @@
-const rawApiBaseUrl =
-  process.env.BACKEND_API_URL ??
-  process.env.NEXT_PUBLIC_BACKEND_URL ??
-  "http://localhost:8080";
-
-export const API_BASE_URL = normalizeBaseUrl(rawApiBaseUrl);
-
-function normalizeBaseUrl(url: string): string {
-  if (!url) {
-    return url;
-  }
-
-  let normalized = url.trim();
-  while (normalized.endsWith("/") && !normalized.endsWith("://")) {
-    normalized = normalized.slice(0, -1);
-  }
-  return normalized;
-}
+export const API_BASE_PATH = "/api/transcripts";
 
 export type TranscriptLine = {
   start: number;
@@ -44,7 +27,7 @@ export async function requestTranscript(params: {
   language?: string;
 }): Promise<{ data?: TranscriptResponse; error?: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/transcripts/fetch`, {
+    const response = await fetch(`${API_BASE_PATH}/fetch`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +65,7 @@ export async function requestTranscriptExport({
   format: ExportFormat;
   signal?: AbortSignal;
 }): Promise<{ blob?: Blob; filename?: string; error?: string }> {
-  const url = `${API_BASE_URL}/api/v1/transcripts/${encodeURIComponent(
+  const url = `${API_BASE_PATH}/${encodeURIComponent(
     transcriptId
   )}/export?format=${encodeURIComponent(format)}`;
 
@@ -124,7 +107,7 @@ export async function requestTranscriptById(
 ): Promise<{ data?: TranscriptResponse; error?: string }> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/transcripts/${encodeURIComponent(transcriptId)}`,
+      `${API_BASE_PATH}/${encodeURIComponent(transcriptId)}`,
       {
         method: "GET",
         headers: {
