@@ -1,0 +1,34 @@
+# COPY THESE EXACT VALUES TO CAPROVER
+# =====================================
+# App Name: transcriptai (or your app name)
+# URL: https://your-app.your-server.com
+# Go to: CapRover Dashboard → Your App → App Configs → Environmental Variables
+# Add each line below as: Key = Value
+
+DB_HOST=your-postgres-host.com
+DB_PORT=5432
+DB_NAME=yt_transcripts
+DB_USER=postgres
+DB_PASSWORD=your-database-password
+
+API_PORT=8080
+
+GOOGLE_API_KEY=your-google-api-key
+AI_PROVIDER=google
+AI_MODEL=gemini-2.5-flash
+AI_MAX_TOKENS=4000
+AI_TEMPERATURE=0.7
+
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+NODE_ENV=production
+
+# =====================================
+# TOTAL: 13 variables
+# After adding all variables, click "Save & Update"
+#
+# IMPORTANT NOTES:
+# - App exposes port 80 (CapRover standard)
+# - Nginx routes /api/* to backend (8080)
+# - Nginx routes /* to frontend (3000)
+# - Public URL: https://your-app.your-server.com
+# =====================================

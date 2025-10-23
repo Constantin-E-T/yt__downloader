@@ -1,7 +1,29 @@
+# Environment files (contain sensitive credentials)
 .env
+.env.local
+.env.production
+.env.caprover
+.env.*.local
+backend/.env
 backend/.env.production
+backend/.env.local
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# Node modules
 node_modules/
 dist/
 *.log
+
+# Build artifacts
 backend/bin/
+backend/main
 database/data/
+
+# CapRover deployment artifacts
+deploy/caprover/deploy.tar.gz
+
+# Sensitive deployment files (contain API keys and passwords)
+deploy/CAPROVER_ENV_VALUES.txt
+deploy/ENVIRONMENT_VARIABLES.md

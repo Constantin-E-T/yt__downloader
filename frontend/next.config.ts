@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const projectDir = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   turbopack: {
     /**
      * Set the workspace root explicitly so Turbopack doesn't walk upward
