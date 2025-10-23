@@ -318,6 +318,7 @@ func DefaultCORSOrigins() []string {
 		"http://localhost:3000",
 		"https://transcriptai.serverplus.org",
 		"https://transcriptai-frontend.serverplus.org",
+		"https://transcriptai.conn.digital",
 		"https://transcriptai-backend.serverplus.org",
 	}
 }
