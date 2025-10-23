@@ -129,8 +129,13 @@ func (s *Server) setupRoutes() {
 	s.router.Use(requestTimer)
 
 	// CORS configuration
+	allowedOrigins := s.config.CORSAllowedOrigins
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = config.DefaultCORSOrigins()
+	}
+
 	s.router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

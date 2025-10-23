@@ -4,11 +4,14 @@ set -e
 echo "🐳 Testing Frontend with Docker..."
 echo ""
 
-# Build the frontend image
+# Allow overriding the backend URL via env var or first argument
+BACKEND_URL="${NEXT_PUBLIC_BACKEND_URL:-${1:-http://localhost:8080}}"
+
 echo "📦 Building frontend Docker image..."
+echo "   ➜ Using backend URL: ${BACKEND_URL}"
 cd frontend
 docker build \
-  --build-arg NEXT_PUBLIC_BACKEND_URL=http://localhost:8080 \
+  --build-arg NEXT_PUBLIC_BACKEND_URL="${BACKEND_URL}" \
   -t yt-frontend-test .
 
 echo ""

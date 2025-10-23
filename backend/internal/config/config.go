@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -25,6 +26,9 @@ type Config struct {
 	AIModel         string // "gpt-4", "gpt-3.5-turbo", "claude-3-opus", "gemini-1.5-flash", etc.
 	AIMaxTokens     int
 	AITemperature   float64
+
+	// CORS configuration
+	CORSAllowedOrigins []string
 }
 
 // Load reads configuration from environment variables
@@ -69,6 +73,8 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid AI_TEMPERATURE: %w", err)
 	}
+
+	config.CORSAllowedOrigins = getCORSAllowedOrigins()
 
 	// Validate the configuration
 	if err := config.Validate(); err != nil {
@@ -256,6 +262,8 @@ func LoadWithEnvFile(envFile string) (*Config, error) {
 		return nil, fmt.Errorf("invalid AI_TEMPERATURE: %w", err)
 	}
 
+	config.CORSAllowedOrigins = getCORSAllowedOrigins()
+
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
@@ -278,5 +286,38 @@ func GetDefaults() *Config {
 		AIModel:       "gpt-4",
 		AIMaxTokens:   4000,
 		AITemperature: 0.7,
+
+		CORSAllowedOrigins: DefaultCORSOrigins(),
+	}
+}
+
+func getCORSAllowedOrigins() []string {
+	raw := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS"))
+	if raw == "" {
+		return DefaultCORSOrigins()
+	}
+
+	parts := strings.Split(raw, ",")
+	var origins []string
+	for _, part := range parts {
+		origin := strings.TrimSpace(part)
+		if origin != "" {
+			origins = append(origins, origin)
+		}
+	}
+
+	if len(origins) == 0 {
+		return DefaultCORSOrigins()
+	}
+	return origins
+}
+
+func DefaultCORSOrigins() []string {
+	return []string{
+		"http://localhost:5173",
+		"http://localhost:3000",
+		"https://transcriptai.serverplus.org",
+		"https://transcriptai-frontend.serverplus.org",
+		"https://transcriptai-backend.serverplus.org",
 	}
 }
