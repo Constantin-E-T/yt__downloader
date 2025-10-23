@@ -3,15 +3,12 @@ package db
 import (
 	"context"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func BenchmarkGetVideoByYouTubeID(b *testing.B) {
 	container := setupPostgresContainer(b)
-	b.Cleanup(func() {
-		if err := container.Terminate(context.Background()); err != nil {
-			b.Fatalf("terminate container: %v", err)
-		}
-	})
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -26,7 +23,7 @@ func BenchmarkGetVideoByYouTubeID(b *testing.B) {
 
 	repo := NewVideoRepository(database)
 	video := &Video{
-		YouTubeID: "benchmark-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Benchmark Video",
 		Channel:   "Benchmark Channel",
 		Duration:  120,

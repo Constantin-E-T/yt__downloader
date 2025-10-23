@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect } from "react";
 import type { ExtractionType } from "@/lib/api/extractions";
 import type { SummaryType, AITab } from "../types";
 

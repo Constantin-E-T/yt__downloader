@@ -50,7 +50,7 @@ export function HowItWorksSection() {
           <div className="absolute left-8 top-0 hidden h-full w-0.5 bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20 lg:block" />
 
           <div className="space-y-12">
-            {steps.map((step, index) => {
+            {steps.map((step) => {
               const Icon = step.icon;
               return (
                 <div

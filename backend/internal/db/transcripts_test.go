@@ -12,10 +12,6 @@ import (
 
 func TestTranscriptRepository_SaveAndRetrieve(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -40,7 +36,7 @@ func TestTranscriptRepository_SaveAndRetrieve(t *testing.T) {
 	assert.Contains(t, err.Error(), "video id is required")
 
 	video := &Video{
-		YouTubeID: "transcript-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Transcript Test",
 		Channel:   "Channel A",
 		Duration:  120,
@@ -92,10 +88,6 @@ func TestTranscriptRepository_SaveAndRetrieve(t *testing.T) {
 
 func TestTranscriptRepository_JSONBAndConstraints(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -108,7 +100,7 @@ func TestTranscriptRepository_JSONBAndConstraints(t *testing.T) {
 	transcriptRepo := NewTranscriptRepository(database)
 
 	video := &Video{
-		YouTubeID: "json-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "JSON Video",
 		Channel:   "Channel B",
 		Duration:  60,
@@ -140,10 +132,6 @@ func TestTranscriptRepository_JSONBAndConstraints(t *testing.T) {
 
 func TestTranscriptRepository_NotFound(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)

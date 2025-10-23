@@ -27,7 +27,7 @@ export default function AboutPage() {
           Making YouTube Content More Accessible
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-          We're building tools to help you extract maximum value from YouTube
+          We&apos;re building tools to help you extract maximum value from YouTube
           videos through AI-powered transcript analysis.
         </p>
       </div>
@@ -40,8 +40,8 @@ export default function AboutPage() {
         <CardContent className="space-y-4 text-muted-foreground">
           <p>
             YouTube is an incredible source of knowledge, tutorials, and
-            insights. However, consuming video content isn't always the most
-            efficient way to learn or reference information. That's where we
+            insights. However, consuming video content isn&apos;t always the most
+            efficient way to learn or reference information. That&apos;s where we
             come in.
           </p>
           <p>
@@ -128,12 +128,12 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-4 text-muted-foreground">
           <p>
-            We're currently in beta and offering all features completely free.
+            We&apos;re currently in beta and offering all features completely free.
             This is your chance to help shape the future of the product!
           </p>
           <p>
             <strong className="text-foreground">
-              As a beta user, you'll enjoy:
+              As a beta user, you&apos;ll enjoy:
             </strong>
           </p>
           <ul className="ml-6 list-disc space-y-2">
@@ -152,9 +152,9 @@ export default function AboutPage() {
 
       {/* Future Vision */}
       <div className="mt-12 text-center">
-        <h2 className="mb-4 text-2xl font-bold">What's Next?</h2>
+        <h2 className="mb-4 text-2xl font-bold">What&apos;s Next?</h2>
         <p className="mx-auto max-w-2xl text-muted-foreground">
-          We're constantly improving and adding new features. Upcoming additions
+          We&apos;re constantly improving and adding new features. Upcoming additions
           include team collaboration, advanced export formats, custom AI
           prompts, and integrations with popular note-taking apps. Stay tuned!
         </p>

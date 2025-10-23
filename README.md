@@ -1,203 +1,123 @@
 # YouTube Transcript Downloader
 
-A modern, fast, and feature-rich YouTube transcript downloader built with Go, Solid.js, and PostgreSQL.
+End-to-end platform for downloading, searching, and analysing YouTube transcripts. The stack combines a Go API, PostgreSQL storage, and a Next.js 14+ frontend styled with shadcn/ui components.
 
-## Features
+---
 
-- **Fast**: Download 40-minute transcripts in 1-2 seconds
-- **Multi-language**: Support for 10+ languages with automatic detection
-- **Modern UI**: Dark mode, responsive design, WCAG 2.1 AA accessibility
-- **Export**: Download as TXT or JSON formats
-- **History**: Save up to 50 recent downloads with instant search
-- **Search**: Find keywords within transcripts instantly
-- **Monitoring**: Health checks and metrics endpoints
-- **Production-ready**: Optimized performance, comprehensive error handling
+## What’s Included
 
-## Tech Stack
+- **Transcript ingestion** – Fetches transcripts and metadata via the Go API with resilient error handling and monitoring.
+- **Interactive viewer** – Next.js app with tabbed navigation (Transcript, Search, AI, Export) plus a synced YouTube player.
+- **AI assistance** – Summaries, content extraction, and Q&A backed by OpenAI (with caching + telemetry in the backend).
+- **Search & navigation** – Debounced keyword search, deep linking, and transcription highlights tied to player timestamps.
+- **Theming & layout** – Responsive Navbar/Footer, dark/light/system themes, and shadcn/ui primitives for consistent styling.
+- **Database ready** – Production/dev PostgreSQL environments with migrations, indexes, and connection pooling.
+- **Exports** – Download transcripts as JSON or plain text (TXT); SRT support coming next.
 
-### Backend
-- **Language**: Go 1.25+
-- **Framework**: Chi v5 (HTTP router)
-- **Database**: PostgreSQL 16 with pgx v5
-- **YouTube**: kkdai/youtube/v2
-- **Testing**: 95+ tests with 85%+ coverage
+---
 
-### Frontend
-- **Framework**: Solid.js with TypeScript
-- **Styling**: TailwindCSS
-- **Build Tool**: Vite
-- **Data Fetching**: TanStack Query (Solid Query)
-- **Package Manager**: pnpm
+## Architecture Overview
 
-### Infrastructure
-- **Database**: PostgreSQL 16 in Docker
-- **Development**: Docker Compose
-- **Deployment**: Systemd + Nginx (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md))
+| Layer     | Technology                                                                                     |
+|-----------|------------------------------------------------------------------------------------------------|
+| Frontend  | Next.js 15 (App Router, Server Components), React 19, TypeScript, Tailwind CSS, shadcn/ui      |
+| Backend   | Go 1.25.1, Chi router, pgx v5, OpenTelemetry hooks                                             |
+| Database  | PostgreSQL 16 with SQL migrations and structured caching tables                                |
+| Tooling   | pnpm, Turbopack dev server, Playwright/Vitest (planned), Go test/testcontainers, Docker Compose|
+
+Full context lives in `docs/TECH_STACK.md`.
+
+---
 
 ## Quick Start
 
-### Prerequisites
-- Go 1.25+
-- Node.js 20.19+ (or 22.12+)
-- pnpm 9+
-- Docker & Docker Compose
-- PostgreSQL 16 (via Docker)
+### 1. Clone & configure
 
-### Installation
+```bash
+git clone https://github.com/yourusername/yt-transcript-downloader.git
+cd yt-transcript-downloader
+cp .env.example .env
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/yt-transcript-downloader.git
-   cd yt-transcript-downloader
-   ```
+Optional: duplicate `backend/.env` and `backend/.env.production` from the provided templates in the repo, then set API keys (OpenAI/Anthropic) and database credentials.
 
-2. **Set up environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+### 2. Bring up Postgres
 
-3. **Start the database:**
-   ```bash
-   docker-compose up -d db
-   ```
+```bash
+docker compose up -d db
+```
 
-4. **Run database migrations:**
-   ```bash
-   # Apply migrations (001 and 002)
-   psql -h localhost -U postgres -d yt_transcripts -f database/migrations/001_initial_schema_up.sql
-   psql -h localhost -U postgres -d yt_transcripts -f database/migrations/002_add_indexes_up.sql
-   ```
+Apply migrations:
 
-5. **Start the backend:**
-   ```bash
-   cd backend
-   go run cmd/server/main.go
-   ```
+```bash
+psql -h localhost -U postgres -d yt_transcripts \
+  -f database/migrations/001_initial_schema_up.sql
+psql -h localhost -U postgres -d yt_transcripts \
+  -f database/migrations/002_add_indexes_up.sql
+psql -h localhost -U postgres -d yt_transcripts \
+  -f database/migrations/003_ai_summaries_up.sql
+```
 
-6. **Start the frontend:**
-   ```bash
-   cd frontend
-   pnpm install
-   pnpm dev
-   ```
-
-7. **Open the app:**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8080
-   - Health Check: http://localhost:8080/health
-
-## Development
-
-### Backend Development
+### 3. Run the backend
 
 ```bash
 cd backend
-
-# Run tests
-go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Run benchmarks
-go test -bench=. ./internal/db/...
-
-# Run with live reload (install air first)
-go install github.com/cosmtrek/air@latest
-air
+go run cmd/server/main.go
 ```
 
-### Frontend Development
+Key endpoints:
+- `GET /api/health` – service + DB health check
+- `GET /api/metrics` – runtime metrics
+- `POST /api/v1/transcripts/fetch` – transcript ingestion
+- `POST /api/v1/transcripts/{id}/summarize` – AI summaries (brief, detailed, key_points)
+- `POST /api/v1/transcripts/{id}/extract` – AI extractions (code, quotes, action items)
+- `POST /api/v1/transcripts/{id}/qa` – AI question answering with citations
+
+### 4. Run the frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 pnpm install
-
-# Start dev server
 pnpm dev
-
-# Type check
-pnpm typecheck
-
-# Lint
-pnpm lint
-
-# Format
-pnpm format
-
-# Build for production
-pnpm build
 ```
 
-## API Documentation
+Visit http://localhost:3000 and drop in a YouTube URL. The transcript workspace lives under `/transcripts/[videoId]`.
 
-### Endpoints
+---
 
-#### POST /api/v1/transcripts/fetch
-Fetch a YouTube transcript
+## Developer Experience
 
-**Request:**
-```json
-{
-  "video_url": "https://youtube.com/watch?v=dQw4w9WgXcQ",
-  "language": "en"
-}
-```
+- **Backend**
+  ```bash
+  cd backend
+  go test ./...
+  go test -cover ./...
+  ```
+  Recommended: run the API behind `air` or `fresh` for hot reloads.
 
-**Response:**
-```json
-{
-  "video_id": "dQw4w9WgXcQ",
-  "title": "Video Title",
-  "language": "en",
-  "transcript": [
-    {
-      "text": "Transcript text",
-      "start": 1280,
-      "duration": 5840
-    }
-  ]
-}
-```
+- **Frontend**
+  ```bash
+  cd frontend
+  pnpm lint
+  pnpm typecheck
+  pnpm build
+  ```
+  Playwright end-to-end smoke tests land with the Export release.
 
-#### GET /health
-Health check endpoint
+- **Infrastructure**
+  - `docker-compose.yml` – dev services (Postgres, optional workers).
+  - `docker-compose.prod.yml` – production image targets.
+  - `docs/DEPLOYMENT.md` – systemd + Nginx walkthrough.
 
-#### GET /metrics
-System metrics endpoint
+---
 
-See [backend/README.md](backend/README.md) for full API documentation.
+## Roadmap Snapshot
 
-## Deployment
+1. **Export workflows** (current): JSON/TXT downloads live; add clipboard helpers + SRT export.
+2. **Sharing & embeds**: signed URLs, transcript capsules that can be embedded elsewhere.
+3. **Production hardening**: CI pipelines, observability dashboards, rate limiting.
 
-### Production Setup
-
-1. **Configure production environment:**
-   ```bash
-   cp .env.production.example .env.production
-   # Edit with production values
-   ```
-
-2. **Build backend:**
-   ```bash
-   cd backend
-   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/server cmd/server/main.go
-   ```
-
-3. **Build frontend:**
-   ```bash
-   cd frontend
-   pnpm build
-   # Output in dist/
-   ```
-
-4. **Deploy:**
-   - **Backend**: Deploy binary to server, run as systemd service
-   - **Frontend**: Serve dist/ with Nginx/Caddy
-   - **Database**: Use managed PostgreSQL (AWS RDS, DigitalOcean, etc.)
+Check `docs/project/STATUS.md` for the latest progress tracker.
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions.
 

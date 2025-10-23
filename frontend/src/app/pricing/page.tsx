@@ -28,7 +28,7 @@ export default function PricingPage() {
           Free During Beta
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-          All features are completely free while we're in beta. No credit card
+          All features are completely free while we&apos;re in beta. No credit card
           required, no limits.
         </p>
       </div>
@@ -71,8 +71,8 @@ export default function PricingPage() {
           <div className="rounded-lg bg-muted/50 p-4">
             <h4 className="mb-2 font-semibold">What happens after beta?</h4>
             <p className="text-sm text-muted-foreground">
-              We're committed to keeping core features free for individual
-              users. When we eventually launch paid tiers, they'll focus on team
+              We&apos;re committed to keeping core features free for individual
+              users. When we eventually launch paid tiers, they&apos;ll focus on team
               collaboration, advanced integrations, and premium AI models. Beta
               users will receive special benefits and grandfathered pricing.
             </p>
@@ -107,8 +107,8 @@ export default function PricingPage() {
           <div className="rounded-lg border border-border bg-card p-6">
             <h3 className="mb-2 font-semibold">When will beta end?</h3>
             <p className="text-sm text-muted-foreground">
-              We don't have a fixed timeline. The beta will continue until we're
-              confident the product is stable and feature-complete. You'll be
+              We don&apos;t have a fixed timeline. The beta will continue until we&apos;re
+              confident the product is stable and feature-complete. You&apos;ll be
               notified well in advance of any changes.
             </p>
           </div>

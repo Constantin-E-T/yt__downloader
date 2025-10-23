@@ -166,44 +166,13 @@ func (s *Server) handleGetTranscript(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	transcript, err := s.transcriptRepo.GetTranscriptByID(ctx, transcriptID)
-	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
-			writeStructuredError(w, http.StatusNotFound, err, "Transcript not found")
-			return
-		}
-		if isDatabaseUnavailableError(err) {
-			writeStructuredError(w, http.StatusServiceUnavailable, err, "Database unavailable. Please try again later.")
-			return
-		}
-		log.Printf("ERROR [%s %s] get transcript: %v", r.Method, r.URL.Path, err)
-		writeStructuredError(w, http.StatusInternalServerError, err, "Failed to fetch transcript")
+	transcript, video, apiErr := s.lookupTranscriptBundle(ctx, r.Method, r.URL.Path, transcriptID)
+	if apiErr != nil {
+		writeStructuredError(w, apiErr.status, apiErr.err, apiErr.message)
 		return
 	}
 
-	video, err := s.videoRepository.GetVideoByID(ctx, transcript.VideoID)
-	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
-			writeStructuredError(w, http.StatusNotFound, err, "Video metadata not found for transcript")
-			return
-		}
-		if isDatabaseUnavailableError(err) {
-			writeStructuredError(w, http.StatusServiceUnavailable, err, "Database unavailable. Please try again later.")
-			return
-		}
-		log.Printf("ERROR [%s %s] get video: %v", r.Method, r.URL.Path, err)
-		writeStructuredError(w, http.StatusInternalServerError, err, "Failed to fetch video metadata")
-		return
-	}
-
-	lines := convertSegmentsToLines(transcript.Content)
-	resp := TranscriptResponse{
-		TranscriptID: transcript.ID,
-		VideoID:      video.YouTubeID,
-		Title:        video.Title,
-		Language:     transcript.Language,
-		Transcript:   lines,
-	}
+	resp := buildTranscriptResponse(video, transcript)
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -212,4 +181,15 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func buildTranscriptResponse(video *db.Video, transcript *db.Transcript) TranscriptResponse {
+	lines := convertSegmentsToLines(transcript.Content)
+	return TranscriptResponse{
+		TranscriptID: transcript.ID,
+		VideoID:      video.YouTubeID,
+		Title:        video.Title,
+		Language:     transcript.Language,
+		Transcript:   lines,
+	}
 }

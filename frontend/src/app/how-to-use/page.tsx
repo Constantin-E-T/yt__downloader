@@ -53,8 +53,8 @@ export default function HowToUsePage() {
               <div>
                 <p className="font-medium">Copy any YouTube video URL</p>
                 <p className="text-sm text-muted-foreground">
-                  Right-click on any YouTube video and select "Copy link
-                  address"
+                  Right-click on any YouTube video and select &quot;Copy link
+                  address&quot;
                 </p>
               </div>
             </li>
@@ -81,7 +81,7 @@ export default function HowToUsePage() {
               </Badge>
               <div>
                 <p className="font-medium">
-                  Click "Get Transcript" and you're done!
+                  Click &quot;Get Transcript&quot; and you&apos;re done!
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Your transcript will load in seconds with full timestamps
@@ -130,17 +130,17 @@ export default function HowToUsePage() {
                 Language Options
               </h4>
               <p className="text-sm">
-                Leave the language field empty to use the video's default
+                Leave the language field empty to use the video&apos;s default
                 language (usually auto-detected). For specific languages, enter
-                the language code (e.g., "en" for English, "es" for Spanish).
+                the language code (e.g., &quot;en&quot; for English, &quot;es&quot; for Spanish).
               </p>
             </div>
             <div>
               <h4 className="mb-2 font-semibold text-foreground">
-                What if a transcript isn't available?
+                What if a transcript isn&apos;t available?
               </h4>
               <p className="text-sm">
-                If a video doesn't have transcripts (captions disabled), you'll
+                If a video doesn&apos;t have transcripts (captions disabled), you&apos;ll
                 see an error message. Unfortunately, we can only access videos
                 with available transcripts or auto-generated captions.
               </p>
@@ -158,7 +158,7 @@ export default function HowToUsePage() {
           </CardHeader>
           <CardContent className="space-y-4 text-muted-foreground">
             <p>
-              Once loaded, you'll see the full transcript with timestamps. Click
+              Once loaded, you&apos;ll see the full transcript with timestamps. Click
               any timestamp to jump to that moment in the embedded video player.
             </p>
             <div>
@@ -275,7 +275,7 @@ export default function HowToUsePage() {
           </CardHeader>
           <CardContent className="space-y-4 text-muted-foreground">
             <p>
-              Export functionality is coming soon! You'll be able to download
+              Export functionality is coming soon! You&apos;ll be able to download
               transcripts and AI analysis in multiple formats including:
             </p>
             <ul className="ml-6 list-disc space-y-1 text-sm">

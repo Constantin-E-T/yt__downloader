@@ -1,11 +1,5 @@
 import { TranscriptTable } from "@/components/transcript-table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TranscriptResponse } from "@/lib/api/transcripts";
 
 interface TranscriptTabProps {

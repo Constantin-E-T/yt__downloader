@@ -3,9 +3,12 @@ package db
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -16,6 +19,20 @@ import (
 type PostgreSQLContainer struct {
 	testcontainers.Container
 	ConnectionString string
+	cleanup          func(context.Context) error
+}
+
+func (c *PostgreSQLContainer) Close(ctx context.Context) error {
+	if c == nil {
+		return nil
+	}
+	if c.cleanup != nil {
+		return c.cleanup(ctx)
+	}
+	if c.Container != nil {
+		return c.Container.Terminate(ctx)
+	}
+	return nil
 }
 
 // setupPostgresContainer creates a new PostgreSQL test container
@@ -23,6 +40,18 @@ func setupPostgresContainer(tb testing.TB) *PostgreSQLContainer {
 	tb.Helper()
 
 	ctx := context.Background()
+
+	if connStr, ok := externalConnectionString(); ok {
+		if err := verifyDatabaseConnection(ctx, connStr); err == nil {
+			container := &PostgreSQLContainer{
+				ConnectionString: connStr,
+				cleanup:          func(context.Context) error { return nil },
+			}
+			registerContainerCleanup(tb, container)
+			return container
+		}
+		tb.Logf("external database connection unavailable, falling back to testcontainers")
+	}
 
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:16-alpine",
@@ -53,18 +82,70 @@ func setupPostgresContainer(tb testing.TB) *PostgreSQLContainer {
 	connectionString := fmt.Sprintf("postgres://testuser:testpass@%s:%s/testdb?sslmode=disable",
 		hostIP, mappedPort.Port())
 
-	return &PostgreSQLContainer{
+	containerWrapper := &PostgreSQLContainer{
 		Container:        container,
 		ConnectionString: connectionString,
 	}
+	containerWrapper.cleanup = func(ctx context.Context) error {
+		return container.Terminate(ctx)
+	}
+
+	registerContainerCleanup(tb, containerWrapper)
+	return containerWrapper
+}
+
+func registerContainerCleanup(tb testing.TB, container *PostgreSQLContainer) {
+	tb.Helper()
+
+	tb.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		if err := container.Close(ctx); err != nil {
+			tb.Errorf("failed to cleanup test database: %v", err)
+		}
+	})
+}
+
+func externalConnectionString() (string, bool) {
+	if conn := strings.TrimSpace(os.Getenv("TEST_DATABASE_URL")); conn != "" {
+		return conn, true
+	}
+
+	host := strings.TrimSpace(os.Getenv("DB_HOST"))
+	user := strings.TrimSpace(os.Getenv("DB_USER"))
+	password := os.Getenv("DB_PASSWORD")
+	name := strings.TrimSpace(os.Getenv("DB_NAME"))
+	if host == "" || user == "" || password == "" || name == "" {
+		return "", false
+	}
+
+	port := strings.TrimSpace(os.Getenv("DB_PORT"))
+	if port == "" {
+		port = "5432"
+	}
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		user, password, host, port, name)
+
+	return connStr, true
+}
+
+func verifyDatabaseConnection(ctx context.Context, connStr string) error {
+	connCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	pool, err := pgxpool.New(connCtx, connStr)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	return pool.Ping(connCtx)
 }
 
 func TestNewPool_SuccessfulConnection(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	pool, err := NewPool(ctx, container.ConnectionString)
@@ -143,10 +224,6 @@ func TestNewPool_ContextTimeout(t *testing.T) {
 
 func TestNewPoolWithConfig_CustomConfiguration(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 
@@ -174,10 +251,6 @@ func TestNewPoolWithConfig_CustomConfiguration(t *testing.T) {
 
 func TestNewPoolWithConfig_NilConfig(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 
@@ -205,10 +278,6 @@ func TestDefaultPoolConfig(t *testing.T) {
 
 func TestPool_PingAfterConnection(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	pool, err := NewPool(ctx, container.ConnectionString)
@@ -223,10 +292,6 @@ func TestPool_PingAfterConnection(t *testing.T) {
 
 func TestPool_MultipleConnections(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	pool, err := NewPool(ctx, container.ConnectionString)
@@ -279,10 +344,6 @@ func TestPool_MultipleConnections(t *testing.T) {
 
 func TestPool_ConnectionStatistics(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	pool, err := NewPool(ctx, container.ConnectionString)

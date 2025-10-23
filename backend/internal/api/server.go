@@ -53,16 +53,16 @@ type aiExtractionRepository interface {
 
 // Server represents the HTTP API server
 type Server struct {
-	db                 db.DB
-	router             chi.Router
-	srv                *http.Server
-	config             *config.Config
-	youtube            youtubeService
-	videoRepository    videoRepository
-	transcriptRepo     transcriptRepository
-	aiService          aiService
-	aiSummaryRepo      aiSummaryRepository
-	aiExtractionRepo   aiExtractionRepository
+	db               db.DB
+	router           chi.Router
+	srv              *http.Server
+	config           *config.Config
+	youtube          youtubeService
+	videoRepository  videoRepository
+	transcriptRepo   transcriptRepository
+	aiService        aiService
+	aiSummaryRepo    aiSummaryRepository
+	aiExtractionRepo aiExtractionRepository
 }
 
 // NewServer creates a new API server with the given configuration and database connection
@@ -160,6 +160,7 @@ func (s *Server) setupRoutes() {
 			r.Route("/transcripts/{id}/qa", func(r chi.Router) {
 				r.Post("/", s.handleTranscriptQA)
 			})
+			r.Get("/transcripts/{id}/export", s.handleExportTranscript)
 		})
 	})
 }

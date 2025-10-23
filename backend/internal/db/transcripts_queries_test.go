@@ -5,16 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTranscriptRepository_IndexedQueries(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -27,7 +24,7 @@ func TestTranscriptRepository_IndexedQueries(t *testing.T) {
 	repo := NewTranscriptRepository(database)
 
 	video := &Video{
-		YouTubeID: "indexed-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Indexed Video",
 		Channel:   "Channel C",
 		Duration:  90,

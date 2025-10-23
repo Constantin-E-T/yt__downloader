@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Scale, AlertCircle, CheckCircle, XCircle, Mail } from "lucide-react";
 import Link from "next/link";

@@ -360,7 +360,7 @@ func TestValidate_AIConfig(t *testing.T) {
 		cfg.OpenAIAPIKey = "openai-key"
 		err := cfg.Validate()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "AI_PROVIDER must be 'openai' or 'anthropic'")
+		assert.Contains(t, err.Error(), "AI_PROVIDER must be 'openai', 'anthropic', or 'google'")
 	})
 }
 

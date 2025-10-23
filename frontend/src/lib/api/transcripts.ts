@@ -17,6 +17,8 @@ export type TranscriptResponse = {
   transcript: TranscriptLine[];
 };
 
+export type ExportFormat = "json" | "text";
+
 type ErrorResponse = {
   error: string;
   message?: string;
@@ -53,6 +55,52 @@ export async function requestTranscript(params: {
       error instanceof Error
         ? `Failed to reach backend: ${error.message}`
         : "Failed to reach backend: unknown error";
+    return { error: message };
+  }
+}
+
+export async function requestTranscriptExport({
+  transcriptId,
+  format,
+  signal,
+}: {
+  transcriptId: string;
+  format: ExportFormat;
+  signal?: AbortSignal;
+}): Promise<{ blob?: Blob; filename?: string; error?: string }> {
+  const url = `${API_BASE_URL}/api/v1/transcripts/${encodeURIComponent(
+    transcriptId
+  )}/export?format=${encodeURIComponent(format)}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      signal,
+    });
+
+    if (!response.ok) {
+      const isJSON = response.headers.get("Content-Type")?.includes("application/json");
+      const payload = isJSON
+        ? ((await response.json().catch(() => null)) as ErrorResponse | null)
+        : null;
+      const message =
+        payload?.error ??
+        payload?.message ??
+        `Export failed with status ${response.status}. Please try again.`;
+      return { error: message };
+    }
+
+    const disposition = response.headers.get("Content-Disposition");
+    const filenameMatch = disposition?.match(/filename="?([^"]+)"?/i);
+    const filename = filenameMatch?.[1];
+    const blob = await response.blob();
+
+    return { blob, filename };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? `Failed to reach backend: ${error.message}`
+        : "Failed to reach backend: unknown error.";
     return { error: message };
   }
 }

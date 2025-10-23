@@ -11,10 +11,6 @@ import (
 
 func TestConnect_SuccessfulConnection(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	db, err := Connect(ctx, container.ConnectionString)
@@ -52,10 +48,6 @@ func TestConnect_SuccessfulConnection(t *testing.T) {
 
 func TestConnectWithConfig_CustomConfiguration(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 
@@ -88,10 +80,6 @@ func TestConnect_InvalidConnectionString(t *testing.T) {
 
 func TestNewPostgresDB(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	pool, err := NewPool(ctx, container.ConnectionString)
@@ -201,10 +189,6 @@ func TestNewPostgresDB(t *testing.T) {
 
 func TestPostgresDB_TransactionMethods(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	db, err := Connect(ctx, container.ConnectionString)

@@ -12,10 +12,6 @@ import (
 
 func TestCreateAISummary(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -29,7 +25,7 @@ func TestCreateAISummary(t *testing.T) {
 	summaryRepo := NewAISummaryRepository(database)
 
 	video := &Video{
-		YouTubeID: "summary-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Summary Test",
 		Channel:   "Channel",
 		Duration:  120,
@@ -68,10 +64,6 @@ func TestCreateAISummary(t *testing.T) {
 
 func TestGetAISummary_NotFound(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -89,10 +81,6 @@ func TestGetAISummary_NotFound(t *testing.T) {
 
 func TestCreateAISummary_Duplicate(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -106,7 +94,7 @@ func TestCreateAISummary_Duplicate(t *testing.T) {
 	summaryRepo := NewAISummaryRepository(database)
 
 	video := &Video{
-		YouTubeID: "duplicate-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Summary Duplicate",
 		Channel:   "Channel",
 		Duration:  90,
@@ -145,10 +133,6 @@ func TestCreateAISummary_Duplicate(t *testing.T) {
 
 func TestListAISummaries(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -161,7 +145,7 @@ func TestListAISummaries(t *testing.T) {
 	transcriptRepo := NewTranscriptRepository(database)
 	summaryRepo := NewAISummaryRepository(database)
 
-	video := &Video{YouTubeID: "list-video", Title: "List", Channel: "Chan", Duration: 60}
+	video := &Video{YouTubeID: uuid.NewString(), Title: "List", Channel: "Chan", Duration: 60}
 	require.NoError(t, videoRepo.SaveVideo(ctx, video))
 
 	transcript := &Transcript{
@@ -207,10 +191,6 @@ func TestListAISummaries(t *testing.T) {
 
 func TestGetAISummary(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -223,7 +203,7 @@ func TestGetAISummary(t *testing.T) {
 	transcriptRepo := NewTranscriptRepository(database)
 	summaryRepo := NewAISummaryRepository(database)
 
-	video := &Video{YouTubeID: "get-video", Title: "Get", Channel: "Chan", Duration: 30}
+	video := &Video{YouTubeID: uuid.NewString(), Title: "Get", Channel: "Chan", Duration: 30}
 	require.NoError(t, videoRepo.SaveVideo(ctx, video))
 
 	transcript := &Transcript{
@@ -253,10 +233,6 @@ func TestGetAISummary(t *testing.T) {
 
 func TestListAISummaries_NoResults(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -276,10 +252,6 @@ func TestListAISummaries_NoResults(t *testing.T) {
 
 func TestCreateAIExtraction(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -293,7 +265,7 @@ func TestCreateAIExtraction(t *testing.T) {
 	extractionRepo := NewAIExtractionRepository(database)
 
 	video := &Video{
-		YouTubeID: "extract-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Extract Test",
 		Channel:   "Channel",
 		Duration:  120,
@@ -327,15 +299,11 @@ func TestCreateAIExtraction(t *testing.T) {
 	assert.Equal(t, extraction.ID, stored.ID)
 	assert.Equal(t, "gpt-4", stored.Model)
 	assert.Equal(t, 520, stored.TokensUsed)
-	assert.Equal(t, content, stored.Content)
+	assert.JSONEq(t, string(content), string(stored.Content))
 }
 
 func TestGetAIExtraction_NotFound(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -353,10 +321,6 @@ func TestGetAIExtraction_NotFound(t *testing.T) {
 
 func TestCreateAIExtraction_Duplicate(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -370,7 +334,7 @@ func TestCreateAIExtraction_Duplicate(t *testing.T) {
 	extractionRepo := NewAIExtractionRepository(database)
 
 	video := &Video{
-		YouTubeID: "dup-extract-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "Duplicate Extract Test",
 		Channel:   "Channel",
 		Duration:  120,
@@ -410,15 +374,11 @@ func TestCreateAIExtraction_Duplicate(t *testing.T) {
 	assert.Equal(t, firstID, extraction2.ID)
 	assert.Equal(t, "gpt-4", extraction2.Model)
 	assert.Equal(t, 100, extraction2.TokensUsed)
-	assert.Equal(t, content1, extraction2.Content)
+	assert.JSONEq(t, string(content1), string(extraction2.Content))
 }
 
 func TestListAIExtractions(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -432,7 +392,7 @@ func TestListAIExtractions(t *testing.T) {
 	extractionRepo := NewAIExtractionRepository(database)
 
 	video := &Video{
-		YouTubeID: "list-extract-video",
+		YouTubeID: uuid.NewString(),
 		Title:     "List Extract Test",
 		Channel:   "Channel",
 		Duration:  120,
@@ -488,10 +448,6 @@ func TestListAIExtractions(t *testing.T) {
 
 func TestListAIExtractions_NoResults(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)

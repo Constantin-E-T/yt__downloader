@@ -427,7 +427,15 @@ export default function TranscriptPage() {
                     value="export"
                     className="m-0 h-full overflow-y-auto p-0"
                   >
-                    <ExportTab />
+                    <ExportTab
+                      transcriptId={transcriptData.transcript_id}
+                      transcriptTitle={transcriptData.title}
+                      videoUrl={shareUrl}
+                      language={transcriptData.language}
+                      segmentCount={transcriptData.transcript.length}
+                      isReady={transcriptReady}
+                      isLoading={transcriptLoading}
+                    />
                   </TabsContent>
                 </div>
               </Tabs>

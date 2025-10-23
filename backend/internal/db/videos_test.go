@@ -11,10 +11,6 @@ import (
 
 func TestVideoRepository_SaveAndGet(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
@@ -37,8 +33,9 @@ func TestVideoRepository_SaveAndGet(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "youtube id is required")
 
+	ytID := uuid.NewString()
 	video := &Video{
-		YouTubeID: "abc12345",
+		YouTubeID: ytID,
 		Title:     "Original Title",
 		Channel:   "Test Channel",
 		Duration:  245,
@@ -77,10 +74,6 @@ func TestVideoRepository_SaveAndGet(t *testing.T) {
 
 func TestVideoRepository_NotFound(t *testing.T) {
 	container := setupPostgresContainer(t)
-	defer func() {
-		err := container.Terminate(context.Background())
-		assert.NoError(t, err)
-	}()
 
 	ctx := context.Background()
 	database, err := Connect(ctx, container.ConnectionString)
