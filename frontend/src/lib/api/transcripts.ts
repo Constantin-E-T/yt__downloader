@@ -1,7 +1,21 @@
-export const API_BASE_URL =
+const rawApiBaseUrl =
   process.env.BACKEND_API_URL ??
   process.env.NEXT_PUBLIC_BACKEND_URL ??
   "http://localhost:8080";
+
+export const API_BASE_URL = normalizeBaseUrl(rawApiBaseUrl);
+
+function normalizeBaseUrl(url: string): string {
+  if (!url) {
+    return url;
+  }
+
+  let normalized = url.trim();
+  while (normalized.endsWith("/") && !normalized.endsWith("://")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
 
 export type TranscriptLine = {
   start: number;
