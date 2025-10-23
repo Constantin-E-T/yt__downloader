@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -19,12 +19,13 @@ export const metadata: Metadata = {
   title: "TranscriptAI - AI-Powered YouTube Transcript Analysis",
   description:
     "Transform YouTube videos into actionable insights. Download transcripts and analyze them with AI. Get summaries, extract code, quotes, and action items from any YouTube video. By Conn.Digital.",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({
