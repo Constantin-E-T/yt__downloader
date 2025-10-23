@@ -48,6 +48,7 @@
     "    echo 'directory=/app/backend' >> /etc/supervisord.conf && \\",
     "    echo 'autostart=true' >> /etc/supervisord.conf && \\",
     "    echo 'autorestart=true' >> /etc/supervisord.conf && \\",
+    "    echo 'environment=DB_HOST=\"%(ENV_DB_HOST)s\",DB_PORT=\"%(ENV_DB_PORT)s\",DB_NAME=\"%(ENV_DB_NAME)s\",DB_USER=\"%(ENV_DB_USER)s\",DB_PASSWORD=\"%(ENV_DB_PASSWORD)s\",API_PORT=\"%(ENV_API_PORT)s\",GOOGLE_API_KEY=\"%(ENV_GOOGLE_API_KEY)s\",AI_PROVIDER=\"%(ENV_AI_PROVIDER)s\",AI_MODEL=\"%(ENV_AI_MODEL)s\",AI_MAX_TOKENS=\"%(ENV_AI_MAX_TOKENS)s\",AI_TEMPERATURE=\"%(ENV_AI_TEMPERATURE)s\"' >> /etc/supervisord.conf && \\",
     "    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \\",
     "    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \\",
     "    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \\",
