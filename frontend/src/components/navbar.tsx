@@ -35,8 +35,8 @@ export function Navbar() {
           <Image
             src="/logo.svg"
             alt="TranscriptAI Logo"
-            width={64}
-            height={64}
+            width={68}
+            height={68}
             priority
           />
         </Link>
