@@ -4,6 +4,7 @@ import { FeaturesSection } from "@/components/landing/features-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { FAQSection } from "@/components/landing/faq-section";
 import { CTASection } from "@/components/landing/cta-section";
+import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
 
 export const metadata: Metadata = {
   title: "TranscriptAI - AI-Powered YouTube Transcript Analysis",
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="flex flex-col">
+      <OnboardingModal />
       <HeroSection />
       <FeaturesSection />
       <HowItWorksSection />
