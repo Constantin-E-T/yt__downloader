@@ -38,7 +38,7 @@ export function Navbar() {
             alt="TranscriptAI Logo"
             width={68}
             height={68}
-            className="hidden sm:block"
+            className="hidden sm:block h-auto"
             priority
           />
           {/* Mobile: Icon only */}
@@ -47,7 +47,7 @@ export function Navbar() {
             alt="TranscriptAI"
             width={48}
             height={48}
-            className="sm:hidden"
+            className="sm:hidden h-auto"
             priority
           />
         </Link>

@@ -16,6 +16,7 @@ export function Footer() {
               alt="TranscriptAI Logo"
               width={120}
               height={120}
+              className="h-auto"
               priority
             />
             <p className="text-sm text-muted-foreground">
