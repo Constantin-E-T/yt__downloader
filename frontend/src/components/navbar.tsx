@@ -33,7 +33,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/logo.png"
+            src="/logo.svg"
             alt="TranscriptAI Logo"
             width={48}
             height={48}
