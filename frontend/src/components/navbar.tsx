@@ -32,11 +32,22 @@ export function Navbar() {
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center">
+          {/* Desktop: Full logo with text */}
           <Image
             src="/logo.svg"
             alt="TranscriptAI Logo"
             width={68}
             height={68}
+            className="hidden sm:block"
+            priority
+          />
+          {/* Mobile: Icon only */}
+          <Image
+            src="/logo-icon.svg"
+            alt="TranscriptAI"
+            width={48}
+            height={48}
+            className="sm:hidden"
             priority
           />
         </Link>

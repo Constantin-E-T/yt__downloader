@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Github, Linkedin } from "lucide-react";
@@ -10,7 +11,13 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Brand Column */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold">TranscriptAI</h3>
+            <Image
+              src="/logo.svg"
+              alt="TranscriptAI Logo"
+              width={120}
+              height={120}
+              priority
+            />
             <p className="text-sm text-muted-foreground">
               Transform YouTube videos into actionable insights with AI-powered
               analysis.
