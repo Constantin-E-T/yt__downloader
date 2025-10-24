@@ -1,9 +1,3 @@
-# Building TranscriptAI: An AI-Powered YouTube Transcript Analysis Platform
-
-**By Conn.Digital** | Published: October 2025
-
----
-
 ## 🎯 The Problem
 
 As a developer, content creator, or researcher, you've probably found yourself in this situation: watching a 2-hour YouTube tutorial or conference talk, desperately trying to find that one code snippet or quote mentioned 45 minutes in. You scrub through the timeline, rewatch sections, and waste valuable time.
@@ -582,7 +576,7 @@ We built TranscriptAI to solve our own problems. If it helps you too, that's the
 
 ## 🤝 Open Source Philosophy
 
-While TranscriptAI is currently a proprietary project, we're committed to:
+While TranscriptAI is currently a proprietary project, I'm committed to:
 
 - **Sharing knowledge:** Technical blog posts like this one
 - **Open discussions:** Join our Discord for architecture talks
@@ -593,7 +587,7 @@ Interested in the technical details? Have questions? Want to collaborate?
 
 **Reach out:**
 - Website: https://conn.digital
-- Email: emilian@conn.digital
+- Email: constantin@conn.digital
 - LinkedIn: Connect with us and share your thoughts
 - GitHub: Stay tuned for potential open-source releases
 
@@ -696,16 +690,8 @@ Special thanks to:
 
 **Questions? Feedback? Collaboration opportunities?**
 - Website: https://conn.digital
-- Email: emilian@conn.digital
+- Email: constantin@conn.digital
 - LinkedIn: Share your thoughts and connect
 
-We'd love to hear from you!
+I'd love to hear from you!
 
----
-
-**Tags:** #AI #WebDevelopment #NextJS #Golang #PostgreSQL #YouTube #TranscriptAnalysis #FullStack #TypeScript #ProductDevelopment
-
----
-
-*Published by Conn.Digital | October 2025*
-*Read time: 15 minutes*

@@ -61,14 +61,6 @@ export const metadata: Metadata = {
     title: "TranscriptAI - AI-Powered YouTube Transcript Analysis",
     description:
       "Transform YouTube videos into actionable insights with AI. Download transcripts, get summaries, extract code, quotes, and action items. Free during beta.",
-    images: [
-      {
-        url: `${siteUrl}/android-chrome-512x512.png`,
-        width: 512,
-        height: 512,
-        alt: "TranscriptAI Logo",
-      },
-    ],
   },
 
   // Twitter Card metadata
