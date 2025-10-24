@@ -66,11 +66,14 @@ export function HeroSection() {
         <form onSubmit={handleSubmit} className="mx-auto mb-6 max-w-2xl">
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input
+              id="video-url"
+              name="videoUrl"
               type="url"
               placeholder="Paste YouTube URL here... (e.g., https://youtube.com/watch?v=...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
               className="h-12 flex-1 text-base"
+              autoComplete="url"
               required
             />
             <Button

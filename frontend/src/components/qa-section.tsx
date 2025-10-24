@@ -143,6 +143,8 @@ export function QASection({
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-3">
           <textarea
+            id="question"
+            name="question"
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             placeholder="What is the main topic discussed in this video?"
@@ -150,6 +152,7 @@ export function QASection({
             minLength={MIN_QUESTION_LENGTH}
             maxLength={MAX_QUESTION_LENGTH}
             disabled={loading || bootstrapping || !transcriptId}
+            aria-label="Question about transcript"
           />
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
             <span>
