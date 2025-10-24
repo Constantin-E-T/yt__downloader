@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
@@ -99,6 +99,11 @@ export function OnboardingModal() {
         className="max-h-[90vh] max-w-2xl overflow-y-auto p-0 sm:max-w-3xl"
         showCloseButton={false}
       >
+        {/* Visually Hidden Title for Accessibility */}
+        <DialogTitle className="sr-only">
+          Welcome to TranscriptAI - Onboarding ({currentSlide + 1} of {slides.length})
+        </DialogTitle>
+
         {/* Close/Skip Button */}
         <button
           onClick={handleSkip}
